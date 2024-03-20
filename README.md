@@ -58,9 +58,9 @@ You have access to the same options as the texture import, along with an option 
 
 Meshes files are supported at import and export. You can import a specific Level of Details (LoD) ; a lower number means the model will be more detailed. When importing a mesh, you'll have the option to also import the material file associated to it automatically. 
 
-![mod3_import_1.png](images/mod3_import_1.png)
+![mesh_import_1.png](images/mesh_import_1.png)
 
-![mod3_import_2.png](images/mod3_import_2.png)
+![mesh_import_2.png](images/mesh_import_2.png)
 
 ### Animations (mot.698 / motlist.751)
 
@@ -68,11 +68,11 @@ Animation files are supported at import. Due to a mismatch between the way blend
 
 LMT files are found in "mot" folders scattered around in the game files.
 
-![lmt_import_1.png](images/lmt_import_1.png)
+![mot_import_2.png](images/mot_import_2.png)
 
 Animations will be loaded as actions. 
 
-![lmt_import_2.gif](images/lmt_import_2.gif)
+![mot_import_1.gif](images/mot_import_1.gif)
 
 ## Image importer compilation
 
