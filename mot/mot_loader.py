@@ -30,8 +30,6 @@ def load_mot_data(mot_data, bones_baseposs, bones_baserots):
         fcurve_scl_x = action.fcurves.new(data_path=scl_data_path, index=0)
         fcurve_scl_y = action.fcurves.new(data_path=scl_data_path, index=1)
         fcurve_scl_z = action.fcurves.new(data_path=scl_data_path, index=2)
-        if bone_name == "Lip_01_S":
-            print(bone_action)
 
         for time, values in pos_keyframes.items():
             #if time > mot_data["frame_count"]:
@@ -41,8 +39,12 @@ def load_mot_data(mot_data, bones_baseposs, bones_baserots):
             if bone_name in bones_baseposs and bone_action["pos_referential"] == "local":
                 keyframe_pos = Vector([values[1], -values[0], values[2]])
                 #keyframe_pos = (bones_baseposs[bone_name]) + keyframe_pos
-                keyframe_pos = keyframe_pos - Vector([bones_baseposs[bone_name][1], -bones_baseposs[bone_name][0], bones_baseposs[bone_name][2]])
+                keyframe_pos = keyframe_pos - Vector([bones_baseposs[bone_name][1], bones_baseposs[bone_name][0], bones_baseposs[bone_name][2]])
+                #if bone_name == "Hip":
+                    #print(bones_baseposs)
             else:
+                #if bone_name == "Hip":
+                    #print(bones_baseposs)
                 keyframe_pos = Vector([values[0], values[1], values[2]])
 
             keyframe = fcurve_loc_x.keyframe_points.insert(frame=time,value=keyframe_pos[0])

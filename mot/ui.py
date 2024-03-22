@@ -19,7 +19,7 @@ def SetLoggingLevel(level):
     elif level == "ERROR":
         logger.setLevel(logging.ERROR)
         
-class IMPORT_PT_MotlistSettingPanel_1(Panel):
+class DD2_IMPORT_PT_MotlistSettingPanel_1(Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Import Settings"
@@ -37,7 +37,7 @@ class IMPORT_PT_MotlistSettingPanel_1(Panel):
 
         #layout.prop(operator, 'set_fake_user')
 
-class ImportMotlist(bpy.types.Operator, ImportHelper):
+class DD2_ImportMotlist(bpy.types.Operator, ImportHelper):
     """Import from Motlist file format (.motlist)"""
     bl_idname = "dd2_import.dd2_motlist"
     bl_label = 'Import DD2 Motlist'

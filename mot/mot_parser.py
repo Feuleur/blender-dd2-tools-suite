@@ -553,7 +553,22 @@ class MotParser():
                 if bone_hash not in out_bone_action_dict.keys():
                     out_bone_action_dict[bone_hash] = {}
                 out_bone_action_dict[bone_hash][transf_name] = {time:value for time, value in zip(time_list, value_list)}
-                out_bone_action_dict[bone_hash][transf_name + "_referential"] = ["global", "local"][(flags >> 17) & 1]
+                #if name == "human_basic_angry_idle_loop":
+                    #if transf_name == "loc":
+                        #if self.bone_infos[bone_hash]["name"] == "L_LowerLip_03_Edge":
+                            #print("human_basic_angry_idle_loop L_LowerLip_03_Edge", frame_count)
+                            #print(bin(transf_data["flags"])[2:].zfill(32), transf_name)
+                        #if self.bone_infos[bone_hash]["name"] == "L_Chin_01":
+                            #print("human_basic_angry_idle_loop L_Chin_01", frame_count)
+                            #print(bin(transf_data["flags"])[2:].zfill(32), transf_name)
+                #if name == "ch00_000_atk_NA_cling":
+                    #if self.bone_infos[bone_hash]["name"] == "Hip":
+                        #print("ch00_000_atk_NA_cling Hip", frame_count)
+                        #print(bin(transf_data["flags"])[2:].zfill(32), transf_name)
+                    #if self.bone_infos[bone_hash]["name"] == "root":
+                        #print("ch00_000_atk_NA_cling root", frame_count)
+                        #print(bin(transf_data["flags"])[2:].zfill(32), transf_name)
+                out_bone_action_dict[bone_hash][transf_name + "_referential"] = ["global", "local"][(transf_data["flags"] >> 14) & 1]
                 
                 
         bone_actions = []
@@ -665,8 +680,9 @@ class MotListParser():
 if __name__ == "__main__":
     import json
     #parser = MeshParser("./item_224/mod/item_224.mesh.2109148288")
-    #parser = MeshParser("./000/mod/hm06_000.mesh.2109148288")
-    parser = MotListParser(mot_file)
+    parser = MotListParser("./face_human_basic.motlist.751")
+    #parser = MotListParser("./ch00_000_atk.motlist.751")
+    #parser = MotListParser(mot_file)
     data = parser.read()
     #print(json.dumps(data, indent=4))
 

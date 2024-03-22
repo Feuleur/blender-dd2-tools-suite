@@ -210,14 +210,16 @@ class MeshParser():
                 group_offsets.append(self.bs.readUInt64())
             group_infos = []
             for group_offset in group_offsets:
-
+                print(group_offset)
                 self.bs.seek(group_offset)
                 group_info = {}
                 group_info["id"] = self.bs.readUByte()
                 group_info["submesh_count"] = self.bs.readUByte()
                 self.bs.allign(8)
+
                 group_info["vertex_count"] = self.bs.readUInt()
                 group_info["vertex_start"] = total_vertices
+                #print(hex(self.bs.tell()), group_info["vertex_count"])
                 total_vertices += group_info["vertex_count"]
                 if LOD_i == 0:
                     LOD_0_total_vertices += group_info["vertex_count"]
@@ -240,7 +242,8 @@ class MeshParser():
                 "groups":group_infos,
             })
         material_count = len(set(materials_idxs))
-
+        import json
+        print(json.dumps(LOD_infos, indent=4))
 
         # Names
         names = []
@@ -432,6 +435,7 @@ class MeshParser():
         weight_values = None
         color_values = None
         for elem_info in elems_info:
+
             if elem_info["id"] == 0: #POS
                 self.bs.seek(vertex_buffer_offset + elem_info["buffer_start"])
                 value_amount = total_vertices*3
@@ -539,13 +543,13 @@ class MeshParser():
         }
 
 if __name__ == "__main__":
-    from glob import glob
-    mesh_files = glob("./natives/**/*.mesh.*", recursive=True)
+    #from glob import glob
+    #mesh_files = glob("./natives/**/*.mesh.*", recursive=True)
     #parser = MeshParser("./item_224/mod/item_224.mesh.2109148288")
     #parser = MeshParser("./000/mod/hm06_000.mesh.2109148288")
-    #mesh_file = "head_000_f.mesh.231011879"
+    mesh_file = "ch59_000.mesh.231011879"
 
-    for mesh_file in mesh_files:
-        parser = MeshParser(mesh_file)
-        data = parser.read()
-        print(bin(data["debug"]["flag_2"]), mesh_file)
+    #for mesh_file in mesh_files:
+    parser = MeshParser(mesh_file)
+    data = parser.read()
+    #print(bin(data["debug"]["flag_2"]), mesh_file)

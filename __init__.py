@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DD2 tool suite",
     "blender": (3, 6, 0),
-    "version": (1, 0, 1),
+    "version": (1, 0, 2),
     "category": "Import-Export",
 }
 
@@ -16,23 +16,23 @@ import logging
 logger = logging.getLogger("dd2_import")
 import sys
 
-from .mesh.ui import IMPORT_PT_MeshSettingPanel_1 as DD2_IMPORT_PT_MeshSettingPanel_1
-from .mesh.ui import IMPORT_PT_MeshSettingPanel_2 as DD2_IMPORT_PT_MeshSettingPanel_2
-from .mesh.ui import ImportMesh as DD2_ImportMesh
-from .mesh.ui import ExportMesh as DD2_ExportMesh
+from .mesh.ui import DD2_IMPORT_PT_MeshSettingPanel_1
+from .mesh.ui import DD2_IMPORT_PT_MeshSettingPanel_2
+from .mesh.ui import DD2_ImportMesh
+from .mesh.ui import DD2_ExportMesh
 
-from .mdf2.ui import IMPORT_PT_Mdf2SettingPanel_1 as DD2_IMPORT_PT_Mdf2SettingPanel_1
-from .mdf2.ui import IMPORT_PT_Mdf2SettingPanel_2 as DD2_IMPORT_PT_Mdf2SettingPanel_2
-from .mdf2.ui import ImportMdf2 as DD2_ImportMdf2
-from .mdf2.ui import ExportMdf2 as DD2_ExportMdf2
+from .mdf2.ui import DD2_IMPORT_PT_Mdf2SettingPanel_1
+from .mdf2.ui import DD2_IMPORT_PT_Mdf2SettingPanel_2
+from .mdf2.ui import DD2_ImportMdf2
+from .mdf2.ui import DD2_ExportMdf2
 
-from .tex.ui import IMPORT_PT_TexSettingPanel_1 as DD2_IMPORT_PT_TexSettingPanel_1
-from .tex.ui import IMPORT_PT_TexSettingPanel_2 as DD2_IMPORT_PT_TexSettingPanel_2
-from .tex.ui import ImportTex as DD2_ImportTex
-from .tex.ui import ExportTex as DD2_ExportTex
+from .tex.ui import DD2_IMPORT_PT_TexSettingPanel_1
+from .tex.ui import DD2_IMPORT_PT_TexSettingPanel_2
+from .tex.ui import DD2_ImportTex
+from .tex.ui import DD2_ExportTex
 
-from .mot.ui import IMPORT_PT_MotlistSettingPanel_1 as DD2_IMPORT_PT_MotlistSettingPanel_1
-from .mot.ui import ImportMotlist as DD2_ImportMotlist
+from .mot.ui import DD2_IMPORT_PT_MotlistSettingPanel_1
+from .mot.ui import DD2_ImportMotlist
 
 class ColoredFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):

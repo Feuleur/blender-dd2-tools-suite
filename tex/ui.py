@@ -20,7 +20,7 @@ def SetLoggingLevel(level):
     elif level == "ERROR":
         logger.setLevel(logging.ERROR)
 
-class IMPORT_PT_TexSettingPanel_1(Panel):
+class DD2_IMPORT_PT_TexSettingPanel_1(Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Import Settings"
@@ -37,11 +37,11 @@ class IMPORT_PT_TexSettingPanel_1(Panel):
         operator = sfile.active_operator
         
 
-class IMPORT_PT_TexSettingPanel_2(Panel):
+class DD2_IMPORT_PT_TexSettingPanel_2(Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Texture Settings"
-    bl_parent_id = "IMPORT_PT_TexSettingPanel_1"
+    bl_parent_id = "DD2_IMPORT_PT_TexSettingPanel_1"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -62,7 +62,7 @@ class IMPORT_PT_TexSettingPanel_2(Panel):
         row.prop(operator, 'overwrite_png_cache')
 
 
-class ImportTex(bpy.types.Operator, ImportHelper):
+class DD2_ImportTex(bpy.types.Operator, ImportHelper):
     """Import from Tex file format (.tex.*)"""
     bl_idname = "dd2_import.dd2_tex"
     bl_label = 'Import DD2 Tex'
@@ -91,7 +91,7 @@ class ImportTex(bpy.types.Operator, ImportHelper):
         load_tex(filepath, use_loaded=False, use_png_cache=self.use_png_cache, overwrite_png_cache=self.overwrite_png_cache)
 
 
-class ExportTex(bpy.types.Operator, ExportHelper):
+class DD2_ExportTex(bpy.types.Operator, ExportHelper):
     """Export to DD2 texture file format (.tex.760230703)"""
     bl_idname = "dd2_export.dd2_tex"
     bl_label = 'Export DD2 Tex'

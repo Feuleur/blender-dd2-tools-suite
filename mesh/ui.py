@@ -22,7 +22,7 @@ def SetLoggingLevel(level):
     elif level == "ERROR":
         logger.setLevel(logging.ERROR)
 
-class IMPORT_PT_MeshSettingPanel_1(Panel):
+class DD2_IMPORT_PT_MeshSettingPanel_1(Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Import Settings"
@@ -45,14 +45,22 @@ class IMPORT_PT_MeshSettingPanel_1(Panel):
         layout.prop(operator, 'import_material')
         row = layout.row()
         row.enabled = operator.import_material
+        row.prop(operator, 'simplify_mat')
+        row = layout.row()
+        row.enabled = operator.import_material
+        row.prop(operator, 'use_loaded_mat')
+        row = layout.row()
+        row.enabled = operator.import_material and not operator.simplify_mat
         row.prop(operator, 'add_shellfur_geonode')
 
 
-class IMPORT_PT_MeshSettingPanel_2(Panel):
+
+
+class DD2_IMPORT_PT_MeshSettingPanel_2(Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Texture Settings"
-    bl_parent_id = "IMPORT_PT_MeshSettingPanel_1"
+    bl_parent_id = "DD2_IMPORT_PT_MeshSettingPanel_1"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -74,7 +82,7 @@ class IMPORT_PT_MeshSettingPanel_2(Panel):
         layout.prop(operator, 'use_HD_texture')
 
 
-class ImportMesh(bpy.types.Operator, ImportHelper):
+class DD2_ImportMesh(bpy.types.Operator, ImportHelper):
     """Import from Mesh file format (.mesh)"""
     bl_idname = "dd2_import.dd2_mesh"
     bl_label = 'Import DD2 Mesh'
@@ -86,11 +94,13 @@ class ImportMesh(bpy.types.Operator, ImportHelper):
     LOD: bpy.props.IntProperty(name="LoD", description="Import a specific Level of Detail (lower is more detailed)", default=0, min=0, max=10, step=1)
     fix_rotation: bpy.props.BoolProperty(name="Fix rotation", description="Rotate the mesh 90° to fit blender's frame of reference",  default=True)
     connect_bones: bpy.props.BoolProperty(name="Connect bones", description="Connect the bones to their children when available, WILL break animations",  default=False)
-    import_material: bpy.props.BoolProperty(name="Import material", description="Import the material .mrl3 file",  default=False)
+    import_material: bpy.props.BoolProperty(name="Import material", description="Import the material .mdf2 file",  default=False)
+    simplify_mat: bpy.props.BoolProperty(name="Simplify materials", description="Erase the unused properties and textures from the imported material. This will cause issues if you want to export the material as a .mdf2 file afterward", default=True)
+    use_loaded_mat: bpy.props.BoolProperty(name="Reuse loaded materials", description="Use already loaded materials when available, may cause glitches when two objects have similarly named materials", default=True)
     add_shellfur_geonode: bpy.props.BoolProperty(name="Import Shellfur geonode", description="Import the fur textures as a geonode modifier. If using cycles, make sure you have enough transparent light bounces to support it, by default blender doesn't have enough and it will show as black blobs on the mesh",  default=False)
     use_png_cache: bpy.props.BoolProperty(name="Use PNG cache", description="Save a copy of imported .tex in a .png file next to it (subsequent imports will be much faster)", default=True)
     overwrite_png_cache: bpy.props.BoolProperty(name="Overwrite PNG cache", description="Overwrite cached .png", default=False)
-    use_HD_texture: bpy.props.BoolProperty(name="Use HD textures", description="Attempt to use images from the streaming/ folder", default=False)
+    use_HD_texture: bpy.props.BoolProperty(name="Use HD textures", description="Attempt to use images from the streaming/ folder", default=True)
 
     def draw(self, context):
         pass
@@ -148,7 +158,7 @@ class ImportMesh(bpy.types.Operator, ImportHelper):
                     logger.info("Found mdf2 file: " + mdf2_filepath)
 
                     try:
-                        load_mdf2(addon_prefs.game_path, mdf2_filepath, material_template=material_template, use_loaded_mat=False, use_loaded_tex=True, use_png_cache=self.use_png_cache, overwrite_png_cache=self.overwrite_png_cache, use_HD_texture=self.use_HD_texture)
+                        load_mdf2(addon_prefs.game_path, mdf2_filepath, material_template=material_template, use_loaded_mat=self.use_loaded_mat, simplify_mat=self.simplify_mat, use_loaded_tex=True, use_png_cache=self.use_png_cache, overwrite_png_cache=self.overwrite_png_cache, use_HD_texture=self.use_HD_texture)
                         if self.add_shellfur_geonode:
                             for obj in objs:
                                 apply_shellfur_geonode(obj)
@@ -168,7 +178,7 @@ class ImportMesh(bpy.types.Operator, ImportHelper):
         return {"FINISHED"}
 
 
-class ExportMesh(bpy.types.Operator, ExportHelper):
+class DD2_ExportMesh(bpy.types.Operator, ExportHelper):
     """Export to DD2 mesh file format (.mesh.231011879)"""
     bl_idname = "dd2_export.dd2_mesh"
     bl_label = 'Export DD2 Mesh'

@@ -20,7 +20,7 @@ def SetLoggingLevel(level):
     elif level == "ERROR":
         logger.setLevel(logging.ERROR)
 
-class IMPORT_PT_Mdf2SettingPanel_1(Panel):
+class DD2_IMPORT_PT_Mdf2SettingPanel_1(Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Import Settings"
@@ -36,20 +36,14 @@ class IMPORT_PT_Mdf2SettingPanel_1(Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        #layout.prop(operator, 'LOD')
-        #layout.prop(operator, 'fix_rotation')
-        #layout.prop(operator, 'fix_scale')
-        #layout.prop(operator, 'rename_bones')
-        #layout.prop(operator, 'connect_bones')
-        #layout.prop(operator, 'import_material')
-        #layout.prop(operator, 'add_VM_geonode')
+        layout.prop(operator, 'simplify_mat')
 
 
-class IMPORT_PT_Mdf2SettingPanel_2(Panel):
+class DD2_IMPORT_PT_Mdf2SettingPanel_2(Panel):
     bl_space_type = 'FILE_BROWSER'
     bl_region_type = 'TOOL_PROPS'
     bl_label = "Texture Settings"
-    bl_parent_id = "IMPORT_PT_Mdf2SettingPanel_1"
+    bl_parent_id = "DD2_IMPORT_PT_Mdf2SettingPanel_1"
     bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
@@ -63,7 +57,6 @@ class IMPORT_PT_Mdf2SettingPanel_2(Panel):
         
         sfile = context.space_data
         operator = sfile.active_operator
-        #layout.enabled = operator.import_material
         layout.prop(operator, 'use_png_cache')
         row = layout.row()
         row.enabled = operator.use_png_cache
@@ -71,7 +64,7 @@ class IMPORT_PT_Mdf2SettingPanel_2(Panel):
         layout.prop(operator, 'use_HD_texture')
 
 
-class ImportMdf2(bpy.types.Operator, ImportHelper):
+class DD2_ImportMdf2(bpy.types.Operator, ImportHelper):
     """Import from Mdf2 file format (.mdf2)"""
     bl_idname = "dd2_import.dd2_mdf2"
     bl_label = 'Import DD2 Mdf2'
@@ -81,9 +74,10 @@ class ImportMdf2(bpy.types.Operator, ImportHelper):
 
     files: bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
     filter_glob: bpy.props.StringProperty(default="*.mdf2.*")
+    simplify_mat: bpy.props.BoolProperty(name="Simplify materials", description="Erase the unused properties and textures from the imported material. This will cause issues if you want to export the material as a .mdf2 file afterward", default=True)
     use_png_cache: bpy.props.BoolProperty(name="Use PNG cache", description="Save a copy of imported .tex in a .png file next to it (subsequent imports will be much faster)", default=True)
     overwrite_png_cache: bpy.props.BoolProperty(name="Overwrite PNG cache", description="Overwrite cached .png", default=False)
-    use_HD_texture: bpy.props.BoolProperty(name="Use HD textures", description="Attempt to use images from the streaming/ folder", default=False)
+    use_HD_texture: bpy.props.BoolProperty(name="Use HD textures", description="Attempt to use images from the streaming/ folder", default=True)
     
     def draw(self, context):
         pass
@@ -96,40 +90,39 @@ class ImportMdf2(bpy.types.Operator, ImportHelper):
             self.report({"ERROR"}, "Please fill the game path in the addon preferences")
             return {'CANCELLED'}
 
-        folder = (os.path.dirname(self.filepath))
-        filepaths = [os.path.join(folder, x.name) for x in self.files]
+        if self.files:
+            folder = (os.path.dirname(self.filepath))
+            filepaths = [os.path.join(folder, x.name) for x in self.files]
+        else:
+            filepaths = [str(self.filepath)]
+
+        with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mdf2", "all_materials_template_alias.json"), "r") as json_in:
+            material_template = json.load(json_in)
+
+        logger.info("Linking node groups...")
+        node_group_blend_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mdf2", "new_materials_groups.blend")
+        if not os.path.exists(node_group_blend_file):
+            self.report({"ERROR"}, "Could not access node group .blend file")
+            return {"CANCELLED"}
+        logger.info("Importing nodes...")
+        installed = [i.name for i in bpy.data.node_groups]
+        por = []
+        with bpy.data.libraries.load(node_group_blend_file, link = False) as (data_from, data_to):
+            for i in data_from.node_groups:
+                if not i in installed:
+                    por.append(i)
+            data_to.node_groups = por
+
         for filepath in filepaths:
+            load_mdf2(addon_prefs.game_path, filepath, material_template=material_template, use_loaded_mat=False, simplify_mat=self.simplify_mat, use_loaded_tex=True, use_png_cache=self.use_png_cache, overwrite_png_cache=self.overwrite_png_cache, use_HD_texture=self.use_HD_texture)
 
-            with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "all_materials_template_alias.json"), "r") as json_in:
-                material_template = json.load(json_in)
-
-
-            logger.info("Linking node groups...")
-            node_group_blend_file = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "mdf2", "new_materials_groups.blend")
-            #print(node_group_blend_file)
-            if not os.path.exists(node_group_blend_file):
-                self.report({"ERROR"}, "Could not access node group .blend file")
-                return {"CANCELLED"}
-            logger.info("Importing nodes...")
-            installed = [i.name for i in bpy.data.node_groups]
-            por = []
-
-            with bpy.data.libraries.load(node_group_blend_file, link = False) as (data_from, data_to):
-                for group in data_from.node_groups:
-                    if not group in installed:
-                        por.append(group)
-                data_to.node_groups = por
-            #print()
-
-            load_mdf2(addon_prefs.game_path, filepath, material_template=material_template, use_loaded_mat=False, use_loaded_tex=True, use_png_cache=self.use_png_cache, overwrite_png_cache=self.overwrite_png_cache, use_HD_texture=self.use_HD_texture)
-            for group in por:
-                if group.users == 0:
-                    bpy.data.node_groups.remove(group)
-
+        for group in por:
+            if group.users == 0:
+                bpy.data.node_groups.remove(group)
         return {"FINISHED"}
 
 
-class ExportMdf2(bpy.types.Operator, ExportHelper):
+class DD2_ExportMdf2(bpy.types.Operator, ExportHelper):
     """Export to DD2 material file format (.mdf2)"""
     bl_idname = "dd2_export.dd2_mdf2"
     bl_label = 'Export DD2 MDF2'

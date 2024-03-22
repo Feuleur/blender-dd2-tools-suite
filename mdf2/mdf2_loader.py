@@ -82,7 +82,8 @@ def create_img_node(game_path, nodes, filepath, position, use_loaded_tex=False, 
     # A few files have some fucked up names
     new_filepath = None
     filepath = filepath.replace("@", "")
-    filepath = filepath.lower()
+    #print(filepath)
+    #filepath = filepath.lower()
     if use_HD_texture:
         new_filepath = os.path.join(game_path, "streaming", filepath + ".760230703")
         if not os.path.isfile(new_filepath):
@@ -107,7 +108,7 @@ def create_img_node(game_path, nodes, filepath, position, use_loaded_tex=False, 
         #logger.warning("Could not load texture, parser returned None (path=" + new_filepath + ")")
     return node_img
 
-def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, use_loaded_tex=False, use_png_cache=False, overwrite_png_cache=False, use_HD_texture=False, mat_prefix="", enable_foliage=False, enable_flow=False):
+def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, simplify_mat=True, use_loaded_tex=False, use_png_cache=False, overwrite_png_cache=False, use_HD_texture=False, mat_prefix="", enable_foliage=False, enable_flow=False):
     parser = Mdf2Parser(path=filepath)
     mat_dict = parser.read()
     returned_mats = []
@@ -146,8 +147,15 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, u
         texture_frame.label_size = 12
         
         
-        node_PBSDF = nodes["Principled BSDF"]
+        node_BSDF = nodes["Principled BSDF"]
+        nodes.remove(node_BSDF)
+        dd2_shader_node = nodes.new(type='ShaderNodeGroup')
+        dd2_shader_node.location = Vector((-500.0, 500.0))
+        dd2_shader_node.node_tree = bpy.data.node_groups["DD2Shader"]
+        dd2_shader_node.label = "DD2Shader"
         node_output = nodes["Material Output"]
+
+        links.new(dd2_shader_node.outputs["Shader"], node_output.inputs["Surface"])
         
         mat["mmtr_path"] = str(mat_values["mmtr_path"])
         if mat_values["shader_type"] in shader_types.keys():
@@ -267,6 +275,24 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, u
             
             for property_i, property_type in enumerate(mat_values["properties"].keys()):
                 property_value = mat_values["properties"][property_type]
+
+                # Skip creating the property if simplification is enabled
+                if simplify_mat:
+                    enable_node = False
+                    for node in mmtr_pre.node_tree.nodes:
+                        if node.type == "GROUP_INPUT":
+                            if len(node.outputs[property_type].links) != 0:
+                                enable_node = True
+                            break
+                    for node in mmtr_post.node_tree.nodes:
+                        if node.type == "GROUP_INPUT":
+                            if len(node.outputs[property_type].links) != 0:
+                                enable_node = True
+                            break
+                    if not enable_node:
+                        continue
+
+
                 if type(property_value) is list:
                     node_listvalues = []
                     #for single_value_i, single_value in enumerate(property_value):
@@ -318,20 +344,20 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, u
                     links.new(node_value.outputs["Value"], mmtr_pre.inputs[property_type])
                     links.new(node_value.outputs["Value"], mmtr_post.inputs[property_type])
                     
-            if "Frame" in mmtr_pre.inputs or "Frame" in mmtr_post.inputs:
-                if "grass" in group_name.lower() and not enable_foliage:
-                    pass
-                elif "flow" in group_name.lower() and not enable_flow:
-                    pass
-                else:
-                    frame_count = nodes.new(type='ShaderNodeGroup')
-                    frame_count.location = Vector((general_frame_x, general_frame_y-700.0))
-                    frame_count.node_tree = bpy.data.node_groups["FrameCount"]
-                    frame_count.parent = general_frame
-                    if "Frame" in mmtr_pre.inputs:
-                        links.new(frame_count.outputs["Frame"], mmtr_pre.inputs["Frame"])
-                    if "Frame" in mmtr_post.inputs:
-                        links.new(frame_count.outputs["Frame"], mmtr_post.inputs["Frame"])
+            #if "Frame" in mmtr_pre.inputs or "Frame" in mmtr_post.inputs:
+                #if "grass" in group_name.lower() and not enable_foliage:
+                    #pass
+                #elif "flow" in group_name.lower() and not enable_flow:
+                    #pass
+                #else:
+                    #frame_count = nodes.new(type='ShaderNodeGroup')
+                    #frame_count.location = Vector((general_frame_x, general_frame_y-700.0))
+                    #frame_count.node_tree = bpy.data.node_groups["FrameCount"]
+                    #frame_count.parent = general_frame
+                    #if "Frame" in mmtr_pre.inputs:
+                        #links.new(frame_count.outputs["Frame"], mmtr_pre.inputs["Frame"])
+                    #if "Frame" in mmtr_post.inputs:
+                        #links.new(frame_count.outputs["Frame"], mmtr_post.inputs["Frame"])
             
             links.new(node_UVMap1.outputs["UV"], mmtr_pre.inputs["TexCoord1"])
             links.new(node_UVMap2.outputs["UV"], mmtr_pre.inputs["TexCoord2"])
@@ -349,13 +375,31 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, u
                     pass
             
             for texture_i, texture_type in enumerate(mat_values["textures"].keys()):
+                texture_path = mat_values["textures"][texture_type]
+                mat[texture_type] = texture_path
+
+                # Skip creating the texture if simplification is enabled
+                if simplify_mat:
+                    enable_texture = False
+                    for node in mmtr_pre.node_tree.nodes:
+                        if node.type == "GROUP_INPUT":
+                            if len(node.outputs[texture_type + "_RGB"].links) != 0 or len(node.outputs[texture_type + "_A"].links) != 0:
+                                enable_texture = True
+                            break
+                    for node in mmtr_post.node_tree.nodes:
+                        if node.type == "GROUP_INPUT":
+                            if len(node.outputs[texture_type + "_RGB"].links) != 0 or len(node.outputs[texture_type + "_A"].links) != 0:
+                                enable_texture = True
+                            break
+                    if not enable_texture:
+                        continue
+
                 if group_name in multimaps and texture_type in multimaps[group_name]:
-                    texture_path = mat_values["textures"][texture_type]
                     node_position = (texture_frame_x, texture_frame_y)
                     texture_frame_y -= 250.0
                     img_node_1 = create_img_node(game_path, nodes, texture_path, node_position, use_loaded_tex=use_loaded_tex, use_png_cache=use_png_cache, overwrite_png_cache=overwrite_png_cache, use_HD_texture=use_HD_texture)
                     img_node_1.parent = texture_frame
-                    mat[texture_type] = texture_path
+
                     img_node_1.label = texture_type
                     node_position = (texture_frame_x, texture_frame_y)
                     texture_frame_y -= 300.0
@@ -370,13 +414,11 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, u
                     links.new(img_node_2.outputs["Alpha"], mmtr_post.inputs[texture_type + "_A_2"])
                     links.new(node_object_info.outputs["Location"], mmtr_pre.inputs["Random"])
                 else:
-                    texture_path = mat_values["textures"][texture_type]
                     node_position = (texture_frame_x, texture_frame_y)
                     texture_frame_y -= 300.0
                     node_img = create_img_node(game_path, nodes, texture_path, node_position, use_loaded_tex=use_loaded_tex, use_png_cache=use_png_cache, overwrite_png_cache=overwrite_png_cache, use_HD_texture=use_HD_texture)
                     node_img.parent = texture_frame
                     node_img.label = texture_type
-                    mat[texture_type] = texture_path
                     
                     if texture_type in [
                         "FlowMap", 
@@ -394,35 +436,39 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, u
             
             for mmtr_output_key in mmtr_post.outputs.keys():
                 try:
-                    if mmtr_output_key == "Alpha" and "Translucency Color" in mmtr_post.outputs.keys():
-                        continue
-                    links.new(mmtr_post.outputs[mmtr_output_key], nodes["Principled BSDF"].inputs[mmtr_output_key])
+                    links.new(mmtr_post.outputs[mmtr_output_key], dd2_shader_node.inputs[mmtr_output_key])
                 except:
                     pass
-            if "Displacement" in mmtr_post.outputs and "VertexShaderUsed" in mat.keys() and mat["VertexShaderUsed"]:
-                links.new(mmtr_post.outputs["Displacement"], nodes["Material Output"].inputs["Displacement"])
-                mat.cycles.displacement_method = "BOTH"
-            if "Translucency Color" in mmtr_post.outputs:
-                translucency_node = nodes.new(type='ShaderNodeGroup')
-                translucency_node.location = Vector((300.0, 300.0))
-                translucency_node.node_tree = bpy.data.node_groups["Translucency"]
-                translucency_node.label = "Translucency"
-                links.new(mmtr_post.outputs["Translucency Color"], translucency_node.inputs["Translucency Color"])
-                links.new(mmtr_post.outputs["Alpha"], translucency_node.inputs["Alpha"])
-                links.new(mmtr_post.outputs["Normal"], translucency_node.inputs["Normal"])
-                links.new(nodes["Principled BSDF"].outputs["BSDF"], translucency_node.inputs["BSDF"])
-                links.new(translucency_node.outputs["Shader"], nodes["Material Output"].inputs["Surface"])
-                nodes["Material Output"].location = Vector((500.0, 300.0))
-            if (mat["AlphaMaskUsed"] or
-                "Fur_HeightMap" in mat_values["textures"].keys() or
-                "AlphaTranslucentOcclusionSSSMap" in mat_values["textures"].keys() or
-                "AlphaMap" in mat_values["textures"].keys() or
-                "NormalRoughnessAlphaMap" in mat_values["textures"].keys() or
-                group_name in ["Character_Eyelash", "Character_Eyebrow", "Character_Hair", "Character_HairCap"]
-            ):
-                mat.blend_method = "HASHED"
-                mat.shadow_method = "HASHED"
-            pass
+
+            for mmtr_output_key in mmtr_post.outputs.keys():
+                try:
+                    links.new(mmtr_post.outputs[mmtr_output_key], node_output.inputs[mmtr_output_key])
+                except:
+                    pass
+            #if "Displacement" in mmtr_post.outputs and "VertexShaderUsed" in mat.keys() and mat["VertexShaderUsed"]:
+                #links.new(mmtr_post.outputs["Displacement"], nodes["Material Output"].inputs["Displacement"])
+                #mat.cycles.displacement_method = "BOTH"
+            #if "Translucency Color" in mmtr_post.outputs:
+                #translucency_node = nodes.new(type='ShaderNodeGroup')
+                #translucency_node.location = Vector((300.0, 300.0))
+                #translucency_node.node_tree = bpy.data.node_groups["Translucency"]
+                #translucency_node.label = "Translucency"
+                #links.new(mmtr_post.outputs["Translucency Color"], translucency_node.inputs["Translucency Color"])
+                #links.new(mmtr_post.outputs["Alpha"], translucency_node.inputs["Alpha"])
+                #links.new(mmtr_post.outputs["Normal"], translucency_node.inputs["Normal"])
+                #links.new(nodes["Principled BSDF"].outputs["BSDF"], translucency_node.inputs["BSDF"])
+                #links.new(translucency_node.outputs["Shader"], nodes["Material Output"].inputs["Surface"])
+                #nodes["Material Output"].location = Vector((500.0, 300.0))
+            #if (mat["AlphaMaskUsed"] or
+                #"Fur_HeightMap" in mat_values["textures"].keys() or
+                #"AlphaTranslucentOcclusionSSSMap" in mat_values["textures"].keys() or
+                #"AlphaMap" in mat_values["textures"].keys() or
+                #"NormalRoughnessAlphaMap" in mat_values["textures"].keys() or
+                #group_name in ["Character_Eyelash", "Character_Eyebrow", "Character_Hair", "Character_HairCap"]
+            #):
+            mat.blend_method = "HASHED"
+            mat.shadow_method = "HASHED"
+            #pass
         
         
         returned_mats.append(mat)

@@ -74,6 +74,8 @@ Animations will be loaded as actions.
 
 ![mot_import_1.gif](images/mot_import_1.gif)
 
+Note: Animations are currently broken for most characters, some work needs to be done to support everything.
+
 ## Image importer compilation
 
 The image reading code was written in C for speed reasons, and the source code of it is included in this addon.
@@ -89,3 +91,5 @@ gcc read_dxgi_format.c -O3 -g -fopenmp -fPIC -c -o read_dxgi_format.o ; gcc read
 Most of the logic behind it is based on previous importers from MH Rise like [this](https://github.com/alphazolam/RE_RSZ) one and [this](https://github.com/alphazolam/fmt_RE_MESH-Noesis-Plugin) one, both created by the formidable [alphaZomega](https://github.com/alphazolam). Many many thanks to him.
 
 Big thanks to [IvoryLagiacrus](https://twitter.com/ilagiacrus) for his general help and for being a great friend.
+
+The NRRT/NRRA Normal texture decoding was done by [PittRBM](https://bsky.app/profile/wdnrbm.bsky.social), kudos to him for figuring it out!
