@@ -433,12 +433,27 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, s
                         links.new(node_img.outputs["Color"], mmtr_post.inputs[texture_type + "_RGB"])
                         links.new(node_img.outputs["Alpha"], mmtr_post.inputs[texture_type + "_A"])
             
-            
+            has_alpha = (mat["AlphaMaskUsed"] or
+                "Fur_HeightMap" in mat_values["textures"].keys() or
+                "AlphaTranslucentOcclusionSSSMap" in mat_values["textures"].keys() or
+                "AlphaTranslucentOcclusionCavityMap" in mat_values["textures"].keys() or
+                "AlphaMap" in mat_values["textures"].keys() or
+                "NormalRoughnessAlphaMap" in mat_values["textures"].keys() or
+                group_name in ["Character_Eyelash", "Character_Eyebrow", "Character_Hair", "Character_HairCap"]
+            )
+            if "Character_EnemyLarge_Dragon" in group_name:
+                has_alpha = False
+
             for mmtr_output_key in mmtr_post.outputs.keys():
                 try:
+                    if mmtr_output_key == "Alpha" and not has_alpha:
+                        continue
+
                     links.new(mmtr_post.outputs[mmtr_output_key], dd2_shader_node.inputs[mmtr_output_key])
                 except:
                     pass
+            #if "Translucency Color" not in mmtr_post.outputs.keys():
+                #links.new(mmtr_post.outputs["Base Color"], dd2_shader_node.inputs["Translucency Color"])
 
             for mmtr_output_key in mmtr_post.outputs.keys():
                 try:
@@ -459,15 +474,9 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, s
                 #links.new(nodes["Principled BSDF"].outputs["BSDF"], translucency_node.inputs["BSDF"])
                 #links.new(translucency_node.outputs["Shader"], nodes["Material Output"].inputs["Surface"])
                 #nodes["Material Output"].location = Vector((500.0, 300.0))
-            #if (mat["AlphaMaskUsed"] or
-                #"Fur_HeightMap" in mat_values["textures"].keys() or
-                #"AlphaTranslucentOcclusionSSSMap" in mat_values["textures"].keys() or
-                #"AlphaMap" in mat_values["textures"].keys() or
-                #"NormalRoughnessAlphaMap" in mat_values["textures"].keys() or
-                #group_name in ["Character_Eyelash", "Character_Eyebrow", "Character_Hair", "Character_HairCap"]
-            #):
-            mat.blend_method = "HASHED"
-            mat.shadow_method = "HASHED"
+            if has_alpha:
+                mat.blend_method = "HASHED"
+                mat.shadow_method = "HASHED"
             #pass
         
         

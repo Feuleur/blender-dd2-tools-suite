@@ -210,7 +210,7 @@ class MeshParser():
                 group_offsets.append(self.bs.readUInt64())
             group_infos = []
             for group_offset in group_offsets:
-                print(group_offset)
+                #print(group_offset)
                 self.bs.seek(group_offset)
                 group_info = {}
                 group_info["id"] = self.bs.readUByte()
@@ -243,7 +243,7 @@ class MeshParser():
             })
         material_count = len(set(materials_idxs))
         import json
-        print(json.dumps(LOD_infos, indent=4))
+        #print(json.dumps(LOD_infos, indent=4))
 
         # Names
         names = []

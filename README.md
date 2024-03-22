@@ -66,8 +66,6 @@ Meshes files are supported at import and export. You can import a specific Level
 
 Animation files are supported at import. Due to a mismatch between the way blender and the game handle animations, a target armature is needed to apply the proper corrections when importing an animation. Make sure you have a single armature selected when doing so. 
 
-LMT files are found in "mot" folders scattered around in the game files.
-
 ![mot_import_2.png](images/mot_import_2.png)
 
 Animations will be loaded as actions. 
