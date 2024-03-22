@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DD2 tool suite",
     "blender": (3, 6, 0),
-    "version": (1, 0, 2),
+    "version": (1, 0, 3),
     "category": "Import-Export",
 }
 
@@ -87,7 +87,7 @@ class DD2_CustomAddonPreferences(bpy.types.AddonPreferences):
     
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Path to the unpacked game (Up to the root folder of the game, for example \"C:\\XXX\\chunk\\_\")")
+        layout.label(text="Path to the unpacked game (Up to the STM folder, for example \"C:\\XXX\\re_chunk_000\\natives\\stm\")")
         layout.prop(self, "game_path")
         
         layout.prop(self, "logging_level")
