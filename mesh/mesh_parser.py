@@ -201,8 +201,8 @@ class MeshParser():
 
             self.bs.seek(LOD_offset)
             group_count = self.bs.readUShort()
-            _unk = self.bs.readUShort() # real lod ID?
-            _ = self.bs.readFloat()
+            LOD_index = self.bs.readUShort()
+            LOD_distance = self.bs.readFloat()
             group_array_offset = self.bs.readUInt64()
             self.bs.seek(group_array_offset)
             group_offsets = []
@@ -221,7 +221,7 @@ class MeshParser():
                 group_info["vertex_start"] = total_vertices
                 #print(hex(self.bs.tell()), group_info["vertex_count"])
                 total_vertices += group_info["vertex_count"]
-                if LOD_i == 0:
+                if LOD_index == 0:
                     LOD_0_total_vertices += group_info["vertex_count"]
                 group_info["loop_count"] = self.bs.readUInt()
                 total_faces += group_info["loop_count"]
@@ -246,7 +246,8 @@ class MeshParser():
                     total_vertices -= group_info["vertex_count"]
                 group_infos.append(group_info)
             LOD_infos.append({
-                "id":LOD_i,
+                "id":LOD_index,
+                "LOD_distance":LOD_distance,
                 "groups":group_infos,
             })
         material_count = len(set(materials_idxs))
@@ -558,7 +559,8 @@ if __name__ == "__main__":
     #mesh_files = glob("./natives/**/*.mesh.*", recursive=True)
     #parser = MeshParser("./item_224/mod/item_224.mesh.2109148288")
     #parser = MeshParser("./000/mod/hm06_000.mesh.2109148288")
-    mesh_file = "ch59_000.mesh.231011879"
+    #mesh_file = "ch59_000.mesh.231011879"
+    mesh_file = "sm82_004_00.mesh.231011879"
 
     #for mesh_file in mesh_files:
     parser = MeshParser(mesh_file)

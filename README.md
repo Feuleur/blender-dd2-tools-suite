@@ -1,6 +1,6 @@
-# Blender Dragon's Dogma 2 import suite
+# Blender Dragon's Dogma 2 import/export suite
 
-This blender addon provides a suite of file importers for Dragon's Dogma 2 files.
+This blender addon provides a suite of file importers and exporter for Dragon's Dogma 2 files.
 
 ## Prerequisites
 
@@ -18,6 +18,8 @@ A lot of information is written in the console, such as if an object failed to b
 
 ![console.png](images/console.png)
 
+**NOTE: THE EXPORTERS ARE HIGHLY EXPERIMENTAL, AND ONLY WORKS FOR A SELECT FEW FEATURES. DON'T EXPECT TO DO HEAVY MODDING WORK WITH THEM UNTIL THEY GET MORE STABLE**
+
 ## Installation
 
 Download the .zip file provided in one of the releases, or through the following menu:
@@ -28,7 +30,7 @@ The installation is done through Blender's addon manager.
 
 ![install_1.png](images/install_1.png)
 
-The importers can then be found here:
+The importers/exporters can then be found in blender's import/export menus:
 
 ![demo_1.png](images/demo_1.png)
 
@@ -57,7 +59,7 @@ This script behaves the same as selecting multiple files when importing through 
 
 ### Textures (tex.760230703 files)
 
-Texture files are supported at import. Since blender is optimized to load more standard image formats, when a texture is loaded, a .png equivalent will automatically be created alongside it.
+Texture files are supported at import and export. Since blender is optimized to load more standard image formats, when a texture is loaded, a .png equivalent will automatically be created alongside it.
 
 ![tex_import_1.png](images/tex_import_1.png)
 
@@ -67,7 +69,17 @@ You can overwrite the already generated .png images by checking the "Overwrite P
 
 ![tex_import_2.png](images/tex_import_2.png)
 
-Note: some texture formats, most notably BC6 (used by skyboxes) are not supported for now. Which texture could be loaded or not is shown in the logs of the addon, in the python console.
+Note: some texture formats, most notably BC6 (used by skyboxes) are not supported for now. Which texture could be loaded or not is shown in the logs of the addon, in the system console.
+
+To export a texture, select a single image node in the shader tab, then export it through blender's export menu.
+
+![tex_export_1.png](images/tex_export_1.png)
+
+![tex_export_2.png](images/tex_export_2.png)
+
+Note: some texture formats, most notably BC6 (used by skyboxes) are not supported for now. Which texture could be loaded or not is shown in the logs of the addon, in the system console.
+
+Note: The export format is the simpliest available, and also probably the one that takes the most space. Expect files that are up to 4x as big as their original ones.
 
 ### Materials (mdf2.40 files)
 
@@ -79,6 +91,12 @@ You have access to the same options as the texture import, along with an option 
 
 ![mdf2_import_2.png](images/mdf2_import_2.png)
 
+Some data will be put in the custom properties of the material, which will be used if the material is exported.
+
+![mdf2_export_1.png](images/mdf2_export_1.png)
+
+Exporting a material works the same way as exporting a mesh: select a few objects in the scene, then export the file through the export menu. The exporter will go over the objects, check their materials, and if compatible, will put their values in the resulting file. Make sure to check the system console for errors during the export.
+
 ### Meshes (mesh.231011879 files)
 
 Meshes files are supported at import and export. You can import a specific Level of Details (LoD) ; a lower number means the model will be more detailed. When importing a mesh, you'll have the option to also import the material file associated to it automatically. 
@@ -88,6 +106,10 @@ Meshes files are supported at import and export. You can import a specific Level
 ![mesh_import_2.png](images/mesh_import_2.png)
 
 ![mesh_import_3.png](images/mesh_import_3.png)
+
+When exporting a mesh file, select first all the models (and optionnaly a single armature) that you wish to export. The exporter will automatically filter objects that are incompatible, so make sure to check the logs in the python console for errors.
+
+![mesh_export_1.png](images/mesh_export_1.png)
 
 ### Animations (mot.698 / motlist.751)
 

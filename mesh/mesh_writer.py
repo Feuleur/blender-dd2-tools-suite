@@ -395,8 +395,8 @@ def write_mesh(selected_objects):
     names_offset = writer.tell()
     writer.writeUInt64(0) # names offset
 
-
-    writer.writeUInt64(0) #TODO
+    hash_offset = writer.tell()
+    writer.writeUInt64(0) # hash offset
 
     element_header_offset_1 = writer.tell()
     writer.writeUInt64(0) # element header offset
@@ -487,10 +487,11 @@ def write_mesh(selected_objects):
         writer.writeUInt64At(LODheaders_offset[lod_count], writer.tell())
         if first_group_offset is None:
             first_group_offset = writer.tell()
-        writer.writeUInt(len(LOD_data["groups"])) # number of groups
-        #writer.writeFloat(1000.0*(LOD_i+1)) # LOD distance?
+        writer.writeUShort(len(LOD_data["groups"])) # number of groups
+        writer.writeUShort(LOD_i) # LOD index
+        writer.writeFloat(1000.0*(LOD_i+1)) # LOD distance?
         #writer.writeFloat(1.9262832403182983) # LOD distance?
-        writer.writeFloat(0.0) # LOD distance?
+        #writer.writeFloat(0.0) # LOD distance?
         LODgroups_offset = writer.tell()
         writer.writeUInt64(0) # Offset to groups pointers
         writer.padUntilAlligned(8)
@@ -514,7 +515,8 @@ def write_mesh(selected_objects):
             writer.writeUInt(vertex_count)
             writer.writeUInt(loops_count)
             for submesh in group["submeshes"].values():
-                writer.writeUInt(materials.index(submesh["material"]))
+                writer.writeUShort(materials.index(submesh["material"]))
+                writer.writeUShort(0) # Not dealing with that atm TODO
                 writer.writeUInt(len(submesh["data"].loops))
                 writer.writeUInt(global_loops_count)
                 writer.writeUInt(global_vertex_count)
@@ -526,7 +528,7 @@ def write_mesh(selected_objects):
                     global_loops_count += 1
             group_i += 1
         lod_count += 1
-    writer.padUntilAlligned(16)
+    #writer.padUntilAlligned(16)
     
 
     # bones
@@ -534,7 +536,8 @@ def write_mesh(selected_objects):
         writer.writeUInt64At(bones_offset, writer.tell())
         writer.writeUInt(len(armature_data["bones"]))
         writer.writeUInt(len(armature_data["remap"]))
-        writer.padUntilAlligned(16)
+        writer.writeUInt64(0)
+        #writer.padUntilAlligned(16)
         bone_hierarchy_offset = writer.tell()
         writer.writeUInt64(0)
         local_coords_offset = writer.tell()
@@ -643,6 +646,10 @@ def write_mesh(selected_objects):
     writer.padUntilAlligned(16)
 
 
+    #print("Writing hash block")
+    writer.writeUInt64At(hash_offset, writer.tell())
+    writer.writeUInt(2745047434)
+    writer.padUntilAlligned(16)
 
     #print("Writing bone bbox block")
     # bone bounding boxes
@@ -698,21 +705,27 @@ def write_mesh(selected_objects):
     writer.writeUInt64(0)
     face_buffer_offset = writer.tell()
     writer.writeUInt64(0)
-    writer.padUntilAlligned(16)
-    vertex_buffer_size_offset = writer.tell()
-    writer.writeUInt(0) # vertex buffer size
-    face_buffer_size_offset_1 = writer.tell()
-    writer.writeUInt(0) # face buffer size
+    #writer.padUntilAlligned(16)
+    shapekey_buffer_reloffset = writer.tell()
+    writer.writeUInt(0) # shapekey_buffer_reloffset
+    face_buffer_reloffset = writer.tell()
+    writer.writeUInt(0) # face_buffer_reloffset
     writer.writeUShort(len(buff_elems))
     writer.writeUShort(len(buff_elems))
-    face_buffer_size_offset_2 = writer.tell()
-    writer.writeUInt(0)
-    writer.writeUInt(0) #?
-    blendshape_offset = writer.tell()
+    face_buffer_end_reloffset_1 = writer.tell()
+    writer.writeUInt(0) # face_buffer_end_reloffset_1
+    face_buffer_end_reloffset_2 = writer.tell()
+    writer.writeUInt(0) # face_buffer_end_reloffset_2
+    inverted_vertex_buffer_offset = writer.tell()
     #inverted_vertex_buffer_offset = writer.tell()
     writer.writeUInt(0) # WHY ?!?
-    writer.padUntilAlligned(16)
+    writer.writeUInt64(0)
+    writer.writeUInt64(0)
     writer.writeUInt64At(element_header_offset_1, writer.tell())
+    writer.writeUInt64(0)
+    writer.writeUInt64(0)
+    #writer.padUntilAlligned(16)
+
     writer.writeUInt64At(element_header_offset_2, writer.tell())
     buffer_count = 0
     for buff_elem in buff_elems:
@@ -725,7 +738,7 @@ def write_mesh(selected_objects):
     vertex_buffer_start = writer.tell()
     writer.writeUInt64At(vertex_buffer_offset_1, writer.tell())
     writer.writeUInt64At(vertex_buffer_offset_2, writer.tell())
-    writer.writeIntAt(blendshape_offset, -writer.tell())
+    writer.writeIntAt(inverted_vertex_buffer_offset, -writer.tell())
 
     positions = []
     normals = []
@@ -874,16 +887,19 @@ def write_mesh(selected_objects):
         writer.writeUBytes(colors)
 
     writer.padUntilAlligned(8)
-    writer.writeUIntAt(vertex_buffer_size_offset, writer.tell() - vertex_buffer_start)
     writer.padUntilAlligned(16)
+    writer.writeUIntAt(face_buffer_reloffset, writer.tell() - vertex_buffer_start)
     #print("Writing face buffer block")
     # Face buffer
     writer.writeUInt64At(face_buffer_offset, writer.tell())
     face_buffer_start = writer.tell()
     writer.writeUShorts(faces)
-    writer.writeUIntAt(face_buffer_size_offset_1, writer.tell() - face_buffer_start)
-    writer.writeUIntAt(face_buffer_size_offset_2, writer.tell() - face_buffer_start)
+    #writer.writeUIntAt(face_buffer_reloffset, writer.tell() - face_buffer_start)
+    writer.writeUIntAt(face_buffer_end_reloffset_1, writer.tell() - vertex_buffer_start)
+    writer.writeUIntAt(face_buffer_end_reloffset_2, writer.tell() - vertex_buffer_start)
+
     writer.padUntilAlligned(16)
+    writer.writeUIntAt(shapekey_buffer_reloffset, writer.tell() - vertex_buffer_start)
 
     writer.writeUIntAt(filesize_off, len(writer.data))
 

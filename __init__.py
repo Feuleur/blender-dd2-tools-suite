@@ -99,10 +99,10 @@ def DD2_menu_func_import(self, context):
     self.layout.operator(DD2_ImportTex.bl_idname, text="DD2 texture files (.tex.760230703)", icon="TEXTURE_DATA")
     self.layout.operator(DD2_ImportMotlist.bl_idname, text="DD2 animation files (.motlist.751)", icon="ANIM_DATA")
 
-#def DD2_menu_func_export(self, context):
-    #self.layout.operator(DD2_ExportMesh.bl_idname, text="DD2 mesh files (.mesh.231011879)", icon="MESH_DATA")
-    #self.layout.operator(DD2_ExportMdf2.bl_idname, text="DD2 material files (.mdf2.40)", icon="MATERIAL_DATA")
-    #self.layout.operator(DD2_ExportTex.bl_idname, text="DD2 texture files (.tex.760230703)", icon="TEXTURE_DATA")
+def DD2_menu_func_export(self, context):
+    self.layout.operator(DD2_ExportMesh.bl_idname, text="DD2 mesh files (.mesh.231011879)", icon="MESH_DATA")
+    self.layout.operator(DD2_ExportMdf2.bl_idname, text="DD2 material files (.mdf2.40)", icon="MATERIAL_DATA")
+    self.layout.operator(DD2_ExportTex.bl_idname, text="DD2 texture files (.tex.760230703)", icon="TEXTURE_DATA")
 
 def register():
     bpy.utils.register_class(DD2_ImportMesh)
@@ -121,7 +121,7 @@ def register():
     bpy.utils.register_class(DD2_ExportMesh)
     bpy.utils.register_class(DD2_ExportMdf2)
     bpy.utils.register_class(DD2_ExportTex)
-    #bpy.types.TOPBAR_MT_file_export.append(DD2_menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.append(DD2_menu_func_export)
     pass
 
 def unregister():
@@ -141,6 +141,6 @@ def unregister():
     bpy.utils.unregister_class(DD2_ExportMesh)
     bpy.utils.unregister_class(DD2_ExportMdf2)
     bpy.utils.unregister_class(DD2_ExportTex)
-    #bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
     pass
 
