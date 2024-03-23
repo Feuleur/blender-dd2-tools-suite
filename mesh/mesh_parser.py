@@ -201,7 +201,7 @@ class MeshParser():
 
             self.bs.seek(LOD_offset)
             group_count = self.bs.readUShort()
-            _unk = self.bs.readUShort()
+            _unk = self.bs.readUShort() # real lod ID?
             _ = self.bs.readFloat()
             group_array_offset = self.bs.readUInt64()
             self.bs.seek(group_array_offset)
@@ -226,23 +226,31 @@ class MeshParser():
                 group_info["loop_count"] = self.bs.readUInt()
                 total_faces += group_info["loop_count"]
                 group_info["submeshes_info"] = []
+                no_keep = False
                 for submesh_i in range(group_info["submesh_count"]):
-
                     submesh_info = {}
-                    submesh_info["material_idx"] = self.bs.readUInt()
+                    submesh_info["material_idx"] = self.bs.readUShort()
+                    materials_idxs.append(submesh_info["material_idx"])
+                    submesh_info["wtf"] = self.bs.readUShort() #when that shit is set, it's like the vertices aren't in the file
+                    if submesh_info["wtf"] != 0:
+                        no_keep = True
                     submesh_info["loop_count"] = self.bs.readUInt()
                     submesh_info["loop_start"] = self.bs.readUInt()
                     submesh_info["vertex_start"] = self.bs.readUInt()
                     _ = self.bs.readUInt64()
-                    materials_idxs.append(submesh_info["material_idx"])
-                    group_info["submeshes_info"].append(submesh_info)
+                    if not no_keep:
+                        group_info["submeshes_info"].append(submesh_info)
+                if no_keep:
+                    # Have to undo the previous work
+                    total_faces -= group_info["loop_count"]
+                    total_vertices -= group_info["vertex_count"]
                 group_infos.append(group_info)
             LOD_infos.append({
                 "id":LOD_i,
                 "groups":group_infos,
             })
         material_count = len(set(materials_idxs))
-        import json
+        #import json
         #print(json.dumps(LOD_infos, indent=4))
 
         # Names
@@ -264,7 +272,8 @@ class MeshParser():
             mat_id = self.bs.readUShort()
             material_indice_dict[mat_id] = names[mat_id]
             material_indice_list.append(names[mat_id])
-
+        #print(len(material_indice_list))
+        #print(material_count)
 
         # Bones
         bone_infos = None
@@ -428,6 +437,7 @@ class MeshParser():
 
 
         self.bs.seek(vertex_buffer_offset)
+        #print(vertex_buffer_offset)
         pos_values = None
         normal_values = None
         uv1_values = None
@@ -478,6 +488,7 @@ class MeshParser():
         for LOD_i, LOD_info in enumerate(LOD_infos):
             for group_i, group_info in enumerate(LOD_info["groups"]):
                 for submesh_i, submesh_info in enumerate(group_info["submeshes_info"]):
+
                     face_start = submesh_info["loop_start"]//3
                     face_count = submesh_info["loop_count"]//3
                     vertex_start = submesh_info["vertex_start"]

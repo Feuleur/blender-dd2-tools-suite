@@ -568,7 +568,9 @@ class MotParser():
                     #if self.bone_infos[bone_hash]["name"] == "root":
                         #print("ch00_000_atk_NA_cling root", frame_count)
                         #print(bin(transf_data["flags"])[2:].zfill(32), transf_name)
-                out_bone_action_dict[bone_hash][transf_name + "_referential"] = ["global", "local"][(transf_data["flags"] >> 14) & 1]
+                flag_index = {"loc":14, "rot":14, "scl":14}
+                out_bone_action_dict[bone_hash][transf_name + "_referential"] = ["global", "local"][(transf_data["flags"] >> flag_index[transf_name]) & 1]
+                out_bone_action_dict[bone_hash][transf_name + "_flags"] = bin(transf_data["flags"])[2:].zfill(32)
                 
                 
         bone_actions = []
@@ -581,25 +583,34 @@ class MotParser():
                 pos_referential = "global"
                 rot_referential = "global"
                 scl_referential = "global"
+                pos_flags = ""
+                rot_flags = ""
+                scl_flags = ""
 
                 if "loc" in bone_transfs.keys():
                     pos_keyframes = bone_transfs["loc"]
                     pos_referential = bone_transfs["loc_referential"]
+                    pos_flags = bone_transfs["loc_flags"]
                 if "rot" in bone_transfs.keys():
                     rot_keyframes = bone_transfs["rot"]
                     rot_referential = bone_transfs["rot_referential"]
+                    rot_flags = bone_transfs["rot_flags"]
                 if "scl" in bone_transfs.keys():
                     scl_keyframes = bone_transfs["scl"]
                     scl_referential = bone_transfs["scl_referential"]
+                    scl_flags = bone_transfs["scl_flags"]
                 
                 bone_actions.append({
                         "bone_name": self.bone_infos[bone_hash]["name"], 
                         "pos":pos_keyframes,
                         "pos_referential":pos_referential,
+                        "pos_flags":pos_flags,
                         "rot":rot_keyframes,
                         "rot_referential":rot_referential,
+                        "rot_flags":rot_flags,
                         "scl":scl_keyframes,
                         "scl_referential":scl_referential,
+                        "scl_flags":scl_flags
                     }
                 )
 
@@ -680,9 +691,9 @@ class MotListParser():
 if __name__ == "__main__":
     import json
     #parser = MeshParser("./item_224/mod/item_224.mesh.2109148288")
-    parser = MotListParser("./face_human_basic.motlist.751")
+    parser = MotListParser("./ch53_001_fac_basic.motlist.751")
     #parser = MotListParser("./ch00_000_atk.motlist.751")
     #parser = MotListParser(mot_file)
     data = parser.read()
-    #print(json.dumps(data, indent=4))
+    print(json.dumps(data, indent=4))
 

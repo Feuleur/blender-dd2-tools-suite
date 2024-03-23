@@ -146,7 +146,6 @@ class DD2_ImportMesh(bpy.types.Operator, ImportHelper):
                     mesh_basename = os.path.basename(filepath)
                     mesh_dirname = os.path.dirname(filepath)
                     mesh_rawname = ".".join(mesh_basename.split(".")[:-2])
-                    #print("dirname = ", mesh_dirname)
                     mdf2_filepath = os.path.join(mesh_dirname, mesh_rawname + ".mdf2.40")
 
                     if not os.path.exists(mdf2_filepath):

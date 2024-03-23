@@ -20,13 +20,38 @@ A lot of information is written in the console, such as if an object failed to b
 
 ## Installation
 
-Download the .zip file provided in one of the releases, and install it in blender's extension manager. 
+Download the .zip file provided in one of the releases, or through the following menu:
+
+![download.png](images/download.png)
+
+The installation is done through Blender's addon manager.
 
 ![install_1.png](images/install_1.png)
 
 The importers can then be found here:
 
 ![demo_1.png](images/demo_1.png)
+
+## Batch import
+
+The importing functions are callable through the python api.
+
+For example, after installing the addon, running the following script will import objects all at once:
+
+```python
+import bpy
+from glob import glob
+
+files = glob("<extract_location>/Environment/Props/sm6X/sm61/**/*.mesh.231011879", recursive=True)
+
+file_dict = [{"name":file} for file in files]
+
+bpy.ops.dd2_import.dd2_mesh(files=file_dict, import_material=False)
+```
+
+This script behaves the same as selecting multiple files when importing through the GUI: you can set the import options through the arguments, and each imported object will be placed in its own collection.
+
+![import_script.png](images/import_script.png)
 
 ## Supported types
 
@@ -61,6 +86,8 @@ Meshes files are supported at import and export. You can import a specific Level
 ![mesh_import_1.png](images/mesh_import_1.png)
 
 ![mesh_import_2.png](images/mesh_import_2.png)
+
+![mesh_import_3.png](images/mesh_import_3.png)
 
 ### Animations (mot.698 / motlist.751)
 
