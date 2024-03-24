@@ -36,9 +36,9 @@ def load_mot_data(mot_data, bones_baseposs, bones_baserots):
                 #time = 0
 
 
-            if bone_name in bones_baseposs and bone_action["pos_referential"] == "local":
-                keyframe_pos = Vector([values[1], -values[0], values[2]])
-                keyframe_pos = keyframe_pos - Vector([bones_baseposs[bone_name][1], bones_baseposs[bone_name][0], bones_baseposs[bone_name][2]])
+            if bone_name in bones_baseposs:# and bone_action["pos_referential"] == "local":
+                keyframe_pos = Vector([values[0], values[1], values[2]])
+                keyframe_pos = keyframe_pos - Vector([bones_baseposs[bone_name][0], bones_baseposs[bone_name][1], bones_baseposs[bone_name][2]])
             else:
                 keyframe_pos = Vector([values[0], values[1], values[2]])
 
@@ -57,13 +57,14 @@ def load_mot_data(mot_data, bones_baseposs, bones_baserots):
         for time, values in rot_keyframes.items():
             #if time > mot_data["frame_count"]:
                 #time = 0
-            if bone_name in bones_baseposs and bone_action["rot_referential"] == "local":
-                keyframe_rot = Quaternion([values[3], values[0], values[1], values[2]])
-                if bone_name in bones_baserots:
-                    keyframe_rot.rotate(-bones_baserots[bone_name])
-            else:
-                keyframe_rot = Quaternion([values[3], values[0], values[1], values[2]])
+            #if bone_name in bones_baseposs and bone_action["rot_referential"] == "local":
+            keyframe_rot = Quaternion([values[3], values[0], values[1], values[2]])
+            if bone_name in bones_baserots:
+                keyframe_rot.rotate(-bones_baserots[bone_name])
+            #else:
+                #keyframe_rot = Quaternion([values[3], values[0], values[1], values[2]])
 
+            #keyframe_rot = Quaternion([values[3], values[0], values[1], values[2]])
 
             if previous_quaternion is not None:
                 keyframe_rot.make_compatible(previous_quaternion)

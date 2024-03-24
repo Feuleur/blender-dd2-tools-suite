@@ -102,7 +102,7 @@ class MeshParser():
 
         self.magic = self.bs.readUInt()
         self.version = self.bs.readUInt()
-        if self.magic != 1213416781 and self.version != 230517984:
+        if self.magic != 1213416781 or self.version != 230517984:
             raise RuntimeError(str(self.path) + " is not a dd2 mesh file (magic = " + str(self.magic) + ", version = " + str(self.version) + ")")
 
         self.file_size = self.bs.readUInt()

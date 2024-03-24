@@ -553,9 +553,7 @@ class MotParser():
                 if bone_hash not in out_bone_action_dict.keys():
                     out_bone_action_dict[bone_hash] = {}
                 out_bone_action_dict[bone_hash][transf_name] = {time:value for time, value in zip(time_list, value_list)}
-                #if name == "human_basic_angry_idle_loop":
-                    #if transf_name == "loc":
-                        #if self.bone_infos[bone_hash]["name"] == "L_LowerLip_03_Edge":
+
                             #print("human_basic_angry_idle_loop L_LowerLip_03_Edge", frame_count)
                             #print(bin(transf_data["flags"])[2:].zfill(32), transf_name)
                         #if self.bone_infos[bone_hash]["name"] == "L_Chin_01":
@@ -568,9 +566,19 @@ class MotParser():
                     #if self.bone_infos[bone_hash]["name"] == "root":
                         #print("ch00_000_atk_NA_cling root", frame_count)
                         #print(bin(transf_data["flags"])[2:].zfill(32), transf_name)
-                flag_index = {"loc":14, "rot":14, "scl":14}
-                out_bone_action_dict[bone_hash][transf_name + "_referential"] = ["global", "local"][(transf_data["flags"] >> flag_index[transf_name]) & 1]
+                #flag_index = {"loc":14, "rot":14, "scl":14}
+                out_bone_action_dict[bone_hash][transf_name + "_referential"] = "global"
                 out_bone_action_dict[bone_hash][transf_name + "_flags"] = bin(transf_data["flags"])[2:].zfill(32)
+                #if name == "ch20_000_com_cliff_climb_cling":
+                    #interest = "Hip"
+
+                    #if transf_name == "rot" or transf_name == "loc":
+
+                        #if self.bone_infos[bone_hash]["name"] == interest:
+                            #print(interest)
+                            #print(value_list[10])
+                            ##print(["global", "local"][(transf_data["flags"] >> flag_index[transf_name]) & 1])
+                            #print(transf_data["flags"], bin(transf_data["flags"])[2:].zfill(32))
                 
                 
         bone_actions = []
@@ -622,7 +630,7 @@ class MotParser():
             }
         #print([[len(bone_action["pos"]), len(bone_action["rot"]), len(bone_action["scl"])] for bone_action in bone_actions])
         #tmp.append(name, len())
-
+        #print(bone_infos_reformated["Hip"])
         return {
             "name":name,
             "frame_count":frame_count,
@@ -691,9 +699,10 @@ class MotListParser():
 if __name__ == "__main__":
     import json
     #parser = MeshParser("./item_224/mod/item_224.mesh.2109148288")
-    parser = MotListParser("./ch53_001_fac_basic.motlist.751")
+    #parser = MotListParser("./ch53_001_fac_basic.motlist.751")
+    parser = MotListParser("ch20_000_com.motlist.751")
     #parser = MotListParser("./ch00_000_atk.motlist.751")
     #parser = MotListParser(mot_file)
     data = parser.read()
-    print(json.dumps(data, indent=4))
+    #print(json.dumps(data, indent=4))
 

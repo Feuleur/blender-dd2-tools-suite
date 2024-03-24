@@ -1,0 +1,42 @@
+{
+    "c902a417":{
+        "v0":{
+            "types":["string"], 
+            "names":["object_name"]
+        }
+    }, 
+    "dfac3046":{
+        "v0":{
+            "types":["float", "float", "float", "float"], 
+            "names":["pos_x", "pos_y", "pos_z", "pos_w"]
+        }, 
+        "v1":{
+            "types":["float", "float", "float", "float"], 
+            "names":["rot_x", "rot_y", "rot_z", "rot_w"]
+        },
+        "v2":{
+            "types":["float", "float", "float", "float"], 
+            "names":["scl_x", "scl_y", "scl_z", "scl_w"]
+        }
+    }, 
+    "be980941":{
+        "v2":{
+            "types":["string"], 
+            "names":["mesh_path"]
+        }, 
+        "v3":{
+            "types":["string"], 
+            "names":["mat_path"]
+        }
+    }, 
+    "ce5e02e8":{
+        "v17":{
+            "types":["string"], 
+            "names":["mesh_path"]
+        }, 
+        "v18":{
+            "types":["string"], 
+            "names":["mat_path"]
+        }
+    }
+}
