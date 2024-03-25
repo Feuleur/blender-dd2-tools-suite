@@ -81,6 +81,8 @@ Note: The export format is the simpliest available, and also probably the one th
 
 ### Materials (mdf2.40 files)
 
+**NOTE: IF YOU WISH TO EXPORT A MATERIAL, MAKE SURE TO DISABLE THE MATERIAL SIMPLIFICATION WHEN IMPORTING MESHES/MATERIALS**
+
 Material files are supported at import and export. Texture paths are included in the material data, so the importer will need to know where the game was extracted to load them properly. Make sure to fill that value in the addon's settings.
 
 ![mdf2_import_1.png](images/mdf2_import_1.png)
