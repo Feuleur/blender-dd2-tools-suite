@@ -234,7 +234,7 @@ def write_mesh(selected_objects):
                         break
         # Building the remap table, basically checking which bones are actually used
         # breaking the world record for nested for loops
-        
+
         remap_bones = []
         for LOD_i, LOD_data in LOD_datas.items():
             for group in LOD_data["groups"].values():
@@ -246,9 +246,9 @@ def write_mesh(selected_objects):
                                 if submesh["group_index"][group.group] not in remap_bones:
                                     #armature_data["bones"][submesh["group_index"][group.group]]["remap"] = len(armature_data["remap"])
                                     remap_bones.append(submesh["group_index"][group.group])
-        
+
         armature_data["remap"] = []
-        
+
         for bone_name, bone_data in armature_data["bones"].items():
             if bone_name in remap_bones:
                 armature_data["bones"][bone_name]["remap"] = len(armature_data["remap"])
@@ -266,7 +266,7 @@ def write_mesh(selected_objects):
     # Analysing the data
     max_UV_number = 0
     max_color_number = 0
-    
+
     submeshes_count = 0
     materials = []
     for LOD_data in LOD_datas.values():
@@ -285,8 +285,8 @@ def write_mesh(selected_objects):
     else:
         node_count = len(materials)
 
-        
-    
+
+
     unique_ids = set([x[3:] for x in obj_ids])
 
     buff_elems = []
@@ -529,7 +529,7 @@ def write_mesh(selected_objects):
             group_i += 1
         lod_count += 1
     #writer.padUntilAlligned(16)
-    
+
 
     # bones
     if armature_data is not None:
@@ -647,9 +647,9 @@ def write_mesh(selected_objects):
 
 
     #print("Writing hash block")
-    writer.writeUInt64At(hash_offset, writer.tell())
-    writer.writeUInt(2745047434)
-    writer.padUntilAlligned(16)
+    #writer.writeUInt64At(hash_offset, writer.tell())
+    #writer.writeUInt(2745047434)
+    #writer.padUntilAlligned(16)
 
     #print("Writing bone bbox block")
     # bone bounding boxes
@@ -891,7 +891,7 @@ def write_mesh(selected_objects):
     writer.writeUIntAt(face_buffer_reloffset, writer.tell() - vertex_buffer_start)
     #print("Writing face buffer block")
     # Face buffer
-    writer.writeUInt64At(face_buffer_offset, writer.tell())
+    # writer.writeUInt64At(face_buffer_offset, writer.tell())
     face_buffer_start = writer.tell()
     writer.writeUShorts(faces)
     #writer.writeUIntAt(face_buffer_reloffset, writer.tell() - face_buffer_start)

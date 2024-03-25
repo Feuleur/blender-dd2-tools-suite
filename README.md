@@ -69,8 +69,6 @@ You can overwrite the already generated .png images by checking the "Overwrite P
 
 ![tex_import_2.png](images/tex_import_2.png)
 
-Note: some texture formats, most notably BC6 (used by skyboxes) are not supported for now. Which texture could be loaded or not is shown in the logs of the addon, in the system console.
-
 To export a texture, select a single image node in the shader tab, then export it through blender's export menu.
 
 ![tex_export_1.png](images/tex_export_1.png)
@@ -110,6 +108,12 @@ Meshes files are supported at import and export. You can import a specific Level
 When exporting a mesh file, select first all the models (and optionnaly a single armature) that you wish to export. The exporter will automatically filter objects that are incompatible, so make sure to check the logs in the python console for errors.
 
 ![mesh_export_1.png](images/mesh_export_1.png)
+
+![mesh_export_2.png](images/mesh_export_2.png)
+
+![mesh_export_3.png](images/mesh_export_3.png)
+
+Note: The data in mesh files varies wildly, switching some meshes may just not work straight away. In addition, the mesh export function sometimes glitches and give false positive when rejecting a mesh for not being compliant with the export constraints: this will be fixed in the future.
 
 ### Animations (mot.698 / motlist.751)
 
