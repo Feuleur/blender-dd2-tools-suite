@@ -141,6 +141,6 @@ def unregister():
     bpy.utils.unregister_class(DD2_ExportMesh)
     bpy.utils.unregister_class(DD2_ExportMdf2)
     bpy.utils.unregister_class(DD2_ExportTex)
-    bpy.types.TOPBAR_MT_file_export.remove(menu_func_export)
+    bpy.types.TOPBAR_MT_file_export.remove(DD2_menu_func_export)
     pass
 

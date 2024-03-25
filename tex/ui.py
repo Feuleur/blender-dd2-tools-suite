@@ -78,7 +78,7 @@ class DD2_ImportTex(bpy.types.Operator, ImportHelper):
         pass
 
     def execute(self, context):
-        addon_prefs = context.preferences.addons["dd2_tool_suite"].preferences
+        addon_prefs = context.preferences.addons["blender-dd2-tools-suite"].preferences
         SetLoggingLevel(addon_prefs.logging_level)
         
         folder = (os.path.dirname(self.filepath))
