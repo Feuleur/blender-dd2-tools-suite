@@ -232,6 +232,10 @@ def write_mesh(selected_objects):
                     if child.name != bone.name and armature_data["bones"][bone.name]["id"] < armature_data["bones"][child.name]["id"]:
                         armature_data["bones"][bone.name]["sibling"] = child.name
                         break
+            if "unknown_property" in bone.keys():
+                armature_data["bones"][bone.name]["unknown_property"] = bone["unknown_property"]
+            else:
+                armature_data["bones"][bone.name]["unknown_property"] = None
         # Building the remap table, basically checking which bones are actually used
         # breaking the world record for nested for loops
 
@@ -568,6 +572,10 @@ def write_mesh(selected_objects):
                 writer.writeUShort(armature_data["bones"][bone_data["symmetry"]]["id"])
             else:
                 writer.writeUShort(bone_data["id"])
+            if bone_data["unknown_property"] is not None:
+                writer.writeUShort(bone_data["unknown_property"])
+            else:
+                writer.writeUShort(0)
             writer.padUntilAlligned(16)
         writer.writeUInt64At(local_coords_offset, writer.tell())
         matrix = armature_data["matrix"]

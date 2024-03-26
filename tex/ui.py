@@ -4,6 +4,7 @@ from bpy_extras.io_utils import ImportHelper, ExportHelper
 import addon_utils
 
 import os
+import numpy as np
 
 import logging
 logger = logging.getLogger("dd2_import")

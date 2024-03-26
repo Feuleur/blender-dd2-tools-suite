@@ -316,30 +316,45 @@ def export_materials(selected_objects):
 
 
         flag1 = 0
-        for flag1_key in flag1_bits_rvrs.keys():
-            if flag1_key in material.keys() and type(material[flag1_key]) == bool:
-                flag1 += (2**flag1_bits_rvrs[flag1_key]) * int(material[flag1_key])
+        if "flag1" in material.keys():
+            flag1 = material["flag1"]
+        #for flag1_key in flag1_bits_rvrs.keys():
+            #if flag1_key in material.keys() and type(material[flag1_key]) == bool:
+                #flag1 += (2**flag1_bits_rvrs[flag1_key]) * int(material[flag1_key])
 
         flag2 = 0
-        for flag2_key in flag2_bits_rvrs.keys():
-            if flag2_key in material.keys() and type(material[flag2_key]) == bool:
-                flag2 += (2**flag2_bits_rvrs[flag2_key]) * int(material[flag2_key])
+        if "flag2" in material.keys():
+            flag2 = material["flag2"]
+        #for flag2_key in flag2_bits_rvrs.keys():
+            #if flag2_key in material.keys() and type(material[flag2_key]) == bool:
+                #flag2 += (2**flag2_bits_rvrs[flag2_key]) * int(material[flag2_key])
 
         flag3 = 0
-        for flag3_key in flag3_bits_rvrs.keys():
-            if flag3_key in material.keys() and type(material[flag3_key]) == bool:
-                flag3 += (2**flag3_bits_rvrs[flag3_key]) * int(material[flag3_key])
+        if "flag3" in material.keys():
+            flag3 = material["flag3"]
+        #for flag3_key in flag3_bits_rvrs.keys():
+            #if flag3_key in material.keys() and type(material[flag3_key]) == bool:
+                #flag3 += (2**flag3_bits_rvrs[flag3_key]) * int(material[flag3_key])
 
         phong = 0
-        if "Phong" in material.keys() and type(material["Phong"]) == float:
-            try:
-                phong = int(material["Phong"]*255.0)
-                if phong < 0:
-                    phong = 0
-                if phong > 255:
-                    phong = 255
-            except:
-                phong = 0
+        if "phong" in material.keys():
+            phong = material["phong"]
+        #if "Phong" in material.keys() and type(material["Phong"]) == float:
+            #try:
+                #phong = int(material["Phong"]*255.0)
+                #if phong < 0:
+                    #phong = 0
+                #if phong > 255:
+                    #phong = 255
+            #except:
+                #phong = 0
+
+        unknown_hash1 = 0
+        unknown_hash2 = 0
+        if "unknown_hash1" in material.keys():
+            unknown_hash1 = material["unknown_hash1"]
+        if "unknown_hash2" in material.keys():
+            unknown_hash2 = material["unknown_hash2"]
 
         material_texture_data = {}
         for texture_type in material_template_dict[material_type]["textures"]:
@@ -401,7 +416,9 @@ def export_materials(selected_objects):
             "flag1":flag1,
             "flag2":flag2,
             "phong":phong,
-            "flag3":flag3
+            "flag3":flag3,
+            "unknown_hash1":unknown_hash1,
+            "unknown_hash2":unknown_hash2
         })
     return material_datas, beware
 
@@ -430,25 +447,27 @@ def write_mdf2(material_datas):
         writer.writeUInt(prop_block_size) # property block size
         writer.writeUInt(len(material_data["material_property_data"])) # property count
         writer.writeUInt(len(material_data["material_texture_data"])) # property count
-        writer.writeUInt64(0)
+        writer.writeUInt(0) # buffer count, but not dealing with them atm
+        writer.writeUInt(0) # buffer count, but not dealing with them atm
         writer.writeUInt(material_data["shader_type"]) # Shader type
         writer.writeUByte(material_data["flag1"]) # flags 
-        writer.writeUByte(material_data["flag2"]) # flags 
-        writer.writeUByte(0)
+        writer.writeUByte(material_data["flag2"]) # flags
+        writer.writeUByte(material_data["phong"])
         writer.writeUByte(material_data["flag3"]) # flags 
-        writer.writeUInt(0) #TODO
-        writer.writeUInt64(0) #TODO
+        writer.writeUShort(material_data["unknown_hash1"])
+        writer.writeUShort(material_data["unknown_hash2"])
+        writer.writeUInt64(0) # Always 0
         material_offsets_list[material_i]["property_header_offset"] = writer.tell()
         writer.writeUInt64(0) # property header offset
         material_offsets_list[material_i]["texture_header_offset"] = writer.tell()
         writer.writeUInt64(0) # texture header offset
-        material_offsets_list[material_i]["material_string_offset"] = writer.tell()
-        writer.writeUInt64(0) # material string offset
+        material_offsets_list[material_i]["buffer_header_offset"] = writer.tell()
+        writer.writeUInt64(0) # buffer header offset
         material_offsets_list[material_i]["properties_data_offset"] = writer.tell()
         writer.writeUInt64(0) # properties data offset
         material_offsets_list[material_i]["mmtr_path_offset"] = writer.tell()
         writer.writeUInt64(0) # mmtr path offset
-        writer.writeUInt64(0)
+        writer.writeUInt64(0) # Always 0
     textures_offsets_list = []
     for material_i, material_data in enumerate(material_datas):
         writer.writeUInt64At(material_offsets_list[material_i]["texture_header_offset"], writer.tell())
@@ -483,7 +502,7 @@ def write_mdf2(material_datas):
                 properties_counter += 4
 
     for material_i, material_data in enumerate(material_datas):
-        writer.writeUInt64At(material_offsets_list[material_i]["material_string_offset"], writer.tell())
+        writer.writeUInt64At(material_offsets_list[material_i]["buffer_header_offset"], writer.tell())
 
     for material_i, material_data in enumerate(material_datas):
         writer.writeUInt64At(material_offsets_list[material_i]["name_offset"], writer.tell())

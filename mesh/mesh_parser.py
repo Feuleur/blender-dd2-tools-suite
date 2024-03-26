@@ -303,11 +303,12 @@ class MeshParser():
                     bone_info["sibling"] = self.bs.readShort()
                     bone_info["connexion"] = self.bs.readShort()
                     bone_info["symmetry"] = self.bs.readShort()
+                    bone_info["unknown_property"] = self.bs.readShort()
                     if bone_info["id"] in bone_remap:
                         bone_info["remap"] = bone_remap.index(bone_info["id"])
                     else:
                         bone_info["remap"] = None
-                    _ = self.bs.readShort()
+                    #_ = self.bs.readShort()
                     _ = self.bs.readShort()
                     _ = self.bs.readShort()
                     bone_infos.append(bone_info)

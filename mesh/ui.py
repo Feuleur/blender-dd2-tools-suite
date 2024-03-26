@@ -39,8 +39,10 @@ class DD2_IMPORT_PT_MeshSettingPanel_1(Panel):
         sfile = context.space_data
         operator = sfile.active_operator
         
-        #layout.prop(operator, 'filter_glob')
-        layout.prop(operator, 'LOD')
+        layout.prop(operator, 'all_LOD')
+        row = layout.row()
+        row.enabled = not operator.all_LOD
+        row.prop(operator, 'LOD')
         layout.prop(operator, 'fix_rotation')
         layout.prop(operator, 'connect_bones')
         layout.prop(operator, 'import_material')
@@ -92,6 +94,7 @@ class DD2_ImportMesh(bpy.types.Operator, ImportHelper):
     
     files: bpy.props.CollectionProperty(type=bpy.types.PropertyGroup)
     filter_glob: bpy.props.StringProperty(default="*.mesh.*")
+    all_LOD: bpy.props.BoolProperty(name="Import all LoD", description="Import all LoD", default=False)
     LOD: bpy.props.IntProperty(name="LoD", description="Import a specific Level of Detail (lower is more detailed)", default=0, min=0, max=10, step=1)
     fix_rotation: bpy.props.BoolProperty(name="Fix rotation", description="Rotate the mesh 90° to fit blender's frame of reference",  default=True)
     connect_bones: bpy.props.BoolProperty(name="Connect bones", description="Connect the bones to their children when available, WILL break animations",  default=False)
@@ -144,7 +147,12 @@ class DD2_ImportMesh(bpy.types.Operator, ImportHelper):
 
         for filepath in filepaths:
             try:
-                objs = load_mesh(filepath, collection=None, LOD=self.LOD, fix_rotation=self.fix_rotation, connect_bones=self.connect_bones)
+                if self.all_LOD:
+                    LOD = None
+                else:
+                    LOD = self.LOD
+
+                objs = load_mesh(filepath, collection=None, LOD=LOD, fix_rotation=self.fix_rotation, connect_bones=self.connect_bones)
 
                 if self.import_material:
                     logger.info("Attempting to find the mdf2 file...")
@@ -168,10 +176,14 @@ class DD2_ImportMesh(bpy.types.Operator, ImportHelper):
                                 apply_shellfur_geonode(obj)
 
                     except Exception as e:
+                        import traceback
+                        traceback.print_exc()
                         logger.warning("Unable to load material of path " + str(mdf2_filepath) + ", reason = " + str(e))
                         self.report({"WARNING"}, "Unable to load material of path " + str(mdf2_filepath) + ", reason = " + str(e))
                         continue
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 logger.warning("Unable to load mesh of path " + str(filepath) + ", reason = " + str(e))
                 self.report({"WARNING"}, "Unable to load mesh of path " + str(filepath) + ", reason = " + str(e))
                 continue

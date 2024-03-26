@@ -164,19 +164,27 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, s
             mat["shader_type"] = mat_values["shader_type"]
 
         # Flag 1
-        for i in range(8):
-            mat[flag1_bits[i]] = bool((mat_values["flag1"] >> i) & 1)
+        mat["flag1"] = mat_values["flag1"]
+        #for i in range(8):
+            #mat[flag1_bits[i]] = bool((mat_values["flag1"] >> i) & 1)
 
         # Flag 2
-        for i in range(2):
-            mat[flag2_bits[i]] = bool((mat_values["flag2"] >> i) & 1)
+        mat["flag2"] = mat_values["flag2"]
+        #for i in range(2):
+            #mat[flag2_bits[i]] = bool((mat_values["flag2"] >> i) & 1)
 
         # Flag 3
-        for i in range(8):
-            mat[flag3_bits[i]] = bool((mat_values["flag3"] >> i) & 1)
+        mat["flag3"] = mat_values["flag3"]
+        #for i in range(8):
+            #mat[flag3_bits[i]] = bool((mat_values["flag3"] >> i) & 1)
 
         # Phong coef
-        mat["Phong"] = float(((mat_values["flag3"] >> i) & 1) / 255.0)
+        mat["phong"] = mat_values["phong"]
+        #mat["Phong"] = float(((mat_values["flag3"] >> i) & 1) / 255.0)
+
+        # Unknown hash
+        mat["unknown_hash1"] = mat_values["unknown_hash1"]
+        mat["unknown_hash2"] = mat_values["unknown_hash2"]
 
         node_UVMap1 = nodes.new(type='ShaderNodeUVMap')
         node_UVMap1.location = Vector((general_frame_x, general_frame_y-0.0))
@@ -433,8 +441,7 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, s
                         links.new(node_img.outputs["Color"], mmtr_post.inputs[texture_type + "_RGB"])
                         links.new(node_img.outputs["Alpha"], mmtr_post.inputs[texture_type + "_A"])
             
-            has_alpha = (mat["AlphaMaskUsed"] or
-                "Fur_HeightMap" in mat_values["textures"].keys() or
+            has_alpha = ("Fur_HeightMap" in mat_values["textures"].keys() or
                 "AlphaTranslucentOcclusionSSSMap" in mat_values["textures"].keys() or
                 "AlphaTranslucentOcclusionCavityMap" in mat_values["textures"].keys() or
                 "AlphaMap" in mat_values["textures"].keys() or
