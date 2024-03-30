@@ -487,6 +487,15 @@ class MeshParser():
         face_buffer_size = face_buffer_end_reloffset_1 - face_buffer_reloffset
         face_values = np.array(struct.unpack(str(face_buffer_size//2)+"H", self.bs.readBytes(face_buffer_size)))
 
+        if shapekey_buffer_offset != 0:
+            # There's a whole other weight array (that looks like an exact copy of the first one) at the end of the file, which is only there when the shapekeys(?) are activated
+            # Need more examples to decide what to do with it
+
+            self.bs.seek(shapekey_buffer_offset)
+            value_amount = total_vertices*16
+            buffer_size = total_vertices*16
+            shapekey_weight_values = np.array(struct.unpack(str(value_amount)+"B", self.bs.data[self.bs.offset:self.bs.offset+buffer_size])).reshape([total_vertices, -1])
+
         for LOD_i, LOD_info in enumerate(LOD_infos):
             for group_i, group_info in enumerate(LOD_info["groups"]):
                 for submesh_i, submesh_info in enumerate(group_info["submeshes_info"]):
@@ -532,17 +541,27 @@ class MeshParser():
                             weight_ids[weight_ids >= bone_remap_count] = 0
                             LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["weights_names"] = mapping_arr[weight_ids]
                             LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["weights_values"] = weight_force/255.0
+                            
+                            if shapekey_buffer_offset != 0:
+                                shapekey_weight_ids = shapekey_weight_values[vertex_start:vertex_start+vertex_count,:8]
+                                shapekey_weight_force = shapekey_weight_values[vertex_start:vertex_start+vertex_count,8:]
+                                shapekey_weight_force[shapekey_weight_ids >= bone_remap_count] = 255
+                                shapekey_weight_ids[shapekey_weight_ids >= bone_remap_count] = 0
+                                LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["shapekey_weights_names"] = mapping_arr[shapekey_weight_ids]
+                                LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["shapekey_weights_values"] = shapekey_weight_force/255.0
                         else:
                             LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["weights_names"] = np.array([bone_infos[0]["name"]]*weight_values.shape[0]*8).reshape([weight_values.shape[0], 8])
                             LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["weights_values"] = np.ones([weight_values.shape[0], 8], dtype=weight_values.dtype)
+                            
+                            if shapekey_buffer_offset != 0:
+                                LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["shapekey_weights_names"] = np.array([bone_infos[0]["name"]]*shapekey_weight_values.shape[0]*8).reshape([shapekey_weight_values.shape[0], 8])
+                                LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["shapekey_weights_values"] = np.ones([shapekey_weight_values.shape[0], 8], dtype=shapekey_weight_values.dtype)
                     if color_values is not None:
                         LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["colors"] = color_values[vertex_start:vertex_start+vertex_count]
                     LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["faces"] = face_values[submesh_info["loop_start"]:submesh_info["loop_start"]+submesh_info["loop_count"]].reshape([-1,3])
                     LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["material"] = material_indice_list[submesh_info["material_idx"]]
 
 
-            # There's a whole other weight array (that looks like an exact copy of the first one) at the end of the file, which is only there when the shapekeys(?) are activated
-            # Need more examples to decide what to do with it
 
         return {
             "LOD_infos":LOD_infos,

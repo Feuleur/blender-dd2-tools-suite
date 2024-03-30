@@ -240,6 +240,8 @@ def write_mesh(selected_objects):
         # breaking the world record for nested for loops
 
         remap_bones = []
+        shapekey_bones = []
+        has_shapekey = False
         for LOD_i, LOD_data in LOD_datas.items():
             for group in LOD_data["groups"].values():
                 for submesh in group["submeshes"].values():
@@ -250,11 +252,18 @@ def write_mesh(selected_objects):
                                 if submesh["group_index"][group.group] not in remap_bones:
                                     #armature_data["bones"][submesh["group_index"][group.group]]["remap"] = len(armature_data["remap"])
                                     remap_bones.append(submesh["group_index"][group.group])
+                            # If the group is a shapekey group:
+                            if submesh["group_index"][group.group].startswith("SHAPEKEY_"):
+                                has_shapekey = True
+                                if submesh["group_index"][group.group][len("SHAPEKEY_"):] in armature_data["bones"].keys():
+                                    if submesh["group_index"][group.group][len("SHAPEKEY_"):] not in shapekey_bones:
+                                        shapekey_bones.append(submesh["group_index"][group.group][len("SHAPEKEY_"):])
+                                    
 
         armature_data["remap"] = []
 
         for bone_name, bone_data in armature_data["bones"].items():
-            if bone_name in remap_bones:
+            if bone_name in remap_bones or bone_name in shapekey_bones:
                 armature_data["bones"][bone_name]["remap"] = len(armature_data["remap"])
                 armature_data["remap"].append(bone_name)
         for bone_remap_i, bone_remap in enumerate(armature_data["remap"]):
@@ -319,8 +328,13 @@ def write_mesh(selected_objects):
         do_weights = True
         buff_elems.append((4, 16, "weight"))
         buff_elem_count += 1
+        if has_shapekey:
+            do_shapekey = True
+        else:
+            do_shapekey = False
     else:
         do_weights = False
+        do_shapekey = False
     # Vertex color?
     if max_color_number > 0:
         do_colors = True
@@ -711,7 +725,7 @@ def write_mesh(selected_objects):
     writer.writeUInt64(0)
     vertex_buffer_offset_2 = writer.tell()
     writer.writeUInt64(0)
-    face_buffer_offset = writer.tell()
+    shapekey_buffer_offset = writer.tell()
     writer.writeUInt64(0)
     #writer.padUntilAlligned(16)
     shapekey_buffer_reloffset = writer.tell()
@@ -727,7 +741,9 @@ def write_mesh(selected_objects):
     inverted_vertex_buffer_offset = writer.tell()
     #inverted_vertex_buffer_offset = writer.tell()
     writer.writeUInt(0) # WHY ?!?
-    writer.writeUInt64(0)
+    shapekey_buffer_size = writer.tell()
+    writer.writeUInt(0)
+    writer.writeUInt(0)
     writer.writeUInt64(0)
     writer.writeUInt64At(element_header_offset_1, writer.tell())
     writer.writeUInt64(0)
@@ -753,6 +769,7 @@ def write_mesh(selected_objects):
     uv1s = []
     uv2s = []
     weights = []
+    shapekey_weights = []
     colors = []
     faces = []
 
@@ -793,7 +810,37 @@ def write_mesh(selected_objects):
                             weights.append(armature_data["bones"][group[0]]["remap"])
                         for group in all_groups:
                             weights.append(group[1])
+                    
+                    if do_shapekey:
+                        all_groups = [[submesh["group_index"][group.group][len("SHAPEKEY_"):], int(round(group.weight*255))] for group in vertice.groups if group.group in submesh["group_index"].keys() and submesh["group_index"][group.group].startswith("SHAPEKEY_") and submesh["group_index"][group.group][len("SHAPEKEY_"):] in armature_data["bones"].keys()]
+                        # Default to the regular weights
+                        if len(all_groups) == 0:
+                            all_groups = [[submesh["group_index"][group.group], int(round(group.weight*255))] for group in vertice.groups if group.group in submesh["group_index"].keys() and submesh["group_index"][group.group] in armature_data["bones"].keys()]
+                        # If there's still issues, default to the default bone
+                        if len(all_groups) == 0:
+                            all_groups.append([armature_data["default_bone"], 255])
+                        
+                        all_groups.sort(key=lambda a: -a[1])
+                        all_groups = all_groups[:8]
+                        last_group = all_groups[-1][0]
+                        
+                        total_weight = 0
+                        for group_i, group in enumerate(all_groups):
+                            total_weight += group[1]
+                        total_weight_normalized = 0
+                        for group_i, group in enumerate(all_groups):
+                            group[1] = int(round((float(group[1]) / float(total_weight)) * 255))
+                            total_weight_normalized += group[1]
+                        weight_excess = 255-total_weight_normalized
+                        all_groups[0][1] += weight_excess
 
+                        while len(all_groups) < 8:
+                            all_groups.append((last_group, 0))
+
+                        for group in all_groups:
+                            shapekey_weights.append(armature_data["bones"][group[0]]["remap"])
+                        for group in all_groups:
+                            shapekey_weights.append(group[1])
                 #submesh["data"].calc_normals_split()
                 submesh["data"].calc_tangents()
                 rot_mat = submesh["matrix"].to_quaternion().to_matrix()
@@ -908,7 +955,11 @@ def write_mesh(selected_objects):
 
     writer.padUntilAlligned(16)
     writer.writeUIntAt(shapekey_buffer_reloffset, writer.tell() - vertex_buffer_start)
-
+    shapekey_buffer_start = writer.tell()
+    if do_shapekey:
+        writer.writeUInt64At(shapekey_buffer_offset, writer.tell())
+        writer.writeUBytes(shapekey_weights)
+        writer.writeUInt64At(shapekey_buffer_size, writer.tell() - shapekey_buffer_start)
     writer.writeUIntAt(filesize_off, len(writer.data))
 
     # Phew

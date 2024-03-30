@@ -143,6 +143,15 @@ def load_mesh(filepath, collection = None, LOD=0, fix_rotation=False, obj_name="
                             if weight_value != 0.0:
                                 vertex_weight_dict[weight_name].add([vertice.index], weight_value, 'REPLACE')
 
+                if "shapekey_weights_names" in submesh_info.keys() and "shapekey_weights_values" in submesh_info.keys():
+                    vertex_weight_dict = {}
+                    for bone_name in used_bones:
+                        vertex_weight_dict["SHAPEKEY_" + bone_name] = obj.vertex_groups.new(name="SHAPEKEY_" + bone_name)
+                    for vertice, weights_name, weights_value in zip(mesh.vertices, submesh_info["shapekey_weights_names"], submesh_info["shapekey_weights_values"]):
+                        for weight_name, weight_value in zip(weights_name, weights_value):
+                            if weight_value != 0.0:
+                                vertex_weight_dict["SHAPEKEY_" + weight_name].add([vertice.index], weight_value, 'REPLACE')
+                
                 if "uv1" in submesh_info.keys():
                     uv1_layer = mesh.uv_layers.new(name='UV1')
                     for face in mesh.polygons:
