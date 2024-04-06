@@ -133,25 +133,28 @@ class DD2_ExportMdf2(bpy.types.Operator, ExportHelper):
     bl_label = 'Export DD2 MDF2'
     filename_ext = ".40"
     filter_glob: bpy.props.StringProperty(default="*.mdf2*", options={'HIDDEN'})
+    skip_uv_islands: bpy.props.BoolProperty(name="Skip UV island filter", description="Skip the UV island filter, only use if you're sure it's giving false positives: may results in warped textures at the mesh seams", default=False)
 
     def execute(self, context):
         selected_objects = context.selected_objects
         try:
-            material_datas, beware_export = export_materials(selected_objects)
+            material_datas, beware_export = export_materials(selected_objects, self.skip_uv_islands)
             data, beware_write = write_mdf2(material_datas)
             with open(self.filepath, "wb") as file_out:
                 file_out.write(data)
             beware = beware_export or beware_write
             if beware:
-                logger.warning("Export to " + self.filepath + " done, but warning were generated: make sure everything went correctly by checking the python console. ")
+                #logger.warning("Export to " + self.filepath + " done, but warning were generated: make sure everything went correctly by checking the python console. ")
                 self.report({"WARNING"}, "Export done, but warning were generated: make sure everything went correctly by checking the python console")
             else:
-                logger.info("Export to " + self.filepath + " done! ")
+                #logger.info("Export to " + self.filepath + " done! ")
                 self.report({"INFO"}, "Export done!")
             return {"FINISHED"}
         except Exception as e:
-           logger.error("Could not export .mdf2 (path=" + self.filepath + ", exception=" + str(e) + ") ")
-           self.report({"ERROR"}, "Could not export .mdf2 (path=" + self.filepath + ", exception=" + str(e) + ") ")
-           return {"CANCELLED"}
+            #logger.error("Could not export .mdf2 (path=" + self.filepath + ", exception=" + str(e) + ") ")
+            self.report({"ERROR"}, "Could not export .mdf2 (path=" + self.filepath + ", exception=" + str(e) + ") ")
+            import traceback
+            traceback.print_exc()
+            return {"CANCELLED"}
 
         

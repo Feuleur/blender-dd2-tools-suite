@@ -200,14 +200,25 @@ class DD2_ExportMesh(bpy.types.Operator, ExportHelper):
     bl_label = 'Export DD2 Mesh'
     filename_ext = ".231011879"
     filter_glob: bpy.props.StringProperty(default="*.mesh*", options={'HIDDEN'})
+    skip_uv_islands: bpy.props.BoolProperty(name="Skip UV island filter", description="Skip the UV island filter, only use if you're sure it's giving false positives: may results in warped textures at the mesh seams", default=False)
 
     def execute(self, context):
         selected_objects = context.selected_objects
-        data = write_mesh(selected_objects)
+        try:
+            data, beware = write_mesh(selected_objects, self.skip_uv_islands)
+        except Exception as e:
+            self.report({"ERROR"}, "Could not export mesh, reason = " + str(e))
+            import traceback
+            traceback.print_exc()
+            return {"CANCELLED"}
         with open(self.filepath, "wb") as file_out:
             file_out.write(data)
-        logger.info("Export to " + self.filepath + " done! ")
-        self.report({"INFO"}, "Export done, make sure everything went correctly by checking the python console!")
+        if beware:
+            logger.warning("Export to " + self.filepath + " done, but warning were generated: make sure everything went correctly by checking the system console, found in Window->Toggle System Console")
+            self.report({"WARNING"}, "Export done, but warning were generated: make sure everything went correctly by checking the system console, found in Window->Toggle System Console")
+        else:
+            logger.info("Export to " + self.filepath + " done! ")
+            self.report({"INFO"}, "Export done!")
         return {"FINISHED"}
 
         

@@ -96,7 +96,9 @@ class Writer():
         for pad_i in range((size - (len(self.data)%size))%size):
             self.writeUByte(0)
 
-def write_mesh(selected_objects):
+def write_mesh(selected_objects, skip_uv_islands=False):
+    beware = False
+
     # Sanity checks
     # Bunch of janky filters to avoid crashing during the real export
     armatures = []
@@ -104,6 +106,7 @@ def write_mesh(selected_objects):
     obj_ids = []
     lods = []
 
+    mesh_object_count = 0
     # Going over all objects in the collection, keeping the valid meshes and the armatures
     # This is mostly to force the user to check if their shit is correctly set, I could fix a lot of stuff myself but
     # that would imply modifying the user's scene, and I don't want to have that responsability
@@ -112,33 +115,43 @@ def write_mesh(selected_objects):
             if obj.type == "ARMATURE":
                 armatures.append(obj)
             elif obj.type == "MESH":
+                mesh_object_count += 1
                 splitted_name = obj.name.split("_")
                 if len(splitted_name) >= 3:
-                    lod = int(splitted_name[0][len("LOD"):])
-                    group = int(splitted_name[1][len("G"):])
-                    submesh = int(splitted_name[2][len("S"):])
-                    lods.append(lod)
+                    try:
+                        lod = int(splitted_name[0][len("LOD"):])
+                        group = int(splitted_name[1][len("G"):])
+                        submesh = int(splitted_name[2][len("S"):])
+                        lods.append(lod)
+                    except:
+                        beware = True
+                        raise RuntimeError("Could not deduce LOD, GROUP and SUBMESH data from object name: make sure the object name is in the format \"LOD<number>_G<number>_S<number>_...\"")
                     # Check triangulation
                     for polygon in obj.data.polygons:
                         if len(polygon.loop_indices) != 3:
+                            beware = True
                             raise RuntimeError("Mesh is not triangulated! ")
                     # Check UV1
                     if len(obj.data.uv_layers) == 0:
+                        beware = True
                         raise RuntimeError("Mesh does not have UVs! ")
-                    # Check for uv island separation
-                    # What this checks is the proper attribution of data to vertices instead of face corners, but it's HARD
-                    # It does that by checking if any vertice has more than 2 uv coordinates attributed to it. Technically it's missing cases like color attribution for example, but fuck it
-                    for uv_layer in obj.data.uv_layers:
-                        vertice_uv_coords = {}
-                        for loop, uv in zip(obj.data.loops, uv_layer.uv):
-                            if loop.vertex_index not in vertice_uv_coords.keys():
-                                vertice_uv_coords[loop.vertex_index] = uv.vector
-                            else:
-                                if (vertice_uv_coords[loop.vertex_index] - uv.vector).length > 0.01:
-                                    raise RuntimeError("Mesh's UV islands aren't physically separated. .mesh files only support data attributed to vertices instead of face corners like in blender, so you'll have to split the vertices of each UV island. Do that by going in uv editing mode, selecting everything, F3->Seams from islands, selecting one of the seam in edit mode, Shift->G then \"seam\", and tapping \"V\" once.")
-                    if len(obj.material_slots) == 1 and obj.material_slots != None:
+                    if not skip_uv_islands:
+                        # Check for uv island separation
+                        # What this checks is the proper attribution of data to vertices instead of face corners, but it's HARD
+                        # It does that by checking if any vertice has more than 2 uv coordinates attributed to it. Technically it's missing cases like color attribution for example, but fuck it
+                        for uv_layer in obj.data.uv_layers:
+                            vertice_uv_coords = {}
+                            for loop, uv in zip(obj.data.loops, uv_layer.uv):
+                                if loop.vertex_index not in vertice_uv_coords.keys():
+                                    vertice_uv_coords[loop.vertex_index] = uv.vector
+                                else:
+                                    if (vertice_uv_coords[loop.vertex_index] - uv.vector).length > 0.01:
+                                        beware = True
+                                        raise RuntimeError("Mesh's UV islands aren't physically separated. .mesh files only support data attributed to vertices instead of face corners like in blender, so you'll have to split the vertices of each UV island. Do that by going in uv editing mode, selecting everything, F3->Seams from islands, selecting one of the seam in edit mode, Shift->G then \"seam\", and tapping \"V\" once.")
+                    if len(obj.material_slots) == 1 and obj.material_slots != None and obj.material_slots[0].name != "":
                         material = obj.material_slots[0].name
                     else:
+                        beware = True
                         raise RuntimeError("Mesh has no material! ")
                     # Making sure there are no duplicates
                     obj_id = str(lod).zfill(3) + str(group).zfill(3) + str(submesh).zfill(3)
@@ -146,23 +159,29 @@ def write_mesh(selected_objects):
                         obj_ids.append(obj_id)
                         objects.append((lod, group, submesh, obj, material, obj.matrix_world, {x.index:x.name for x in obj.vertex_groups}))
                     else:
+                        beware = True
                         raise RuntimeError("Object of lod " + str(lod) + ", group " + str(group) + " and submesh " + str(submesh) + " found more than once! ")
                 else:
+                    beware = True
                     raise RuntimeError("Could not find lod/group/submesh info in its name! ")
             else:
+                beware = True
                 raise RuntimeError("Not a mesh or armature! ")
         except Exception as e:
+            beware = True
             logger.warning("Skipped object " + obj.name + ", reason = " + str(e))
             continue
 
     if len(objects) == 0:
-        raise RuntimeError("No valid meshes found! ")
+        beware = True
+        raise RuntimeError("No valid meshes found: started with " + str(mesh_object_count) + " meshes but got 0 after filtering for issues. Check the system console for the reasons each were skipped. ")
 
     #for lod_i in range(max(lods)+1):
         #if lod_i not in lods:
             #raise RuntimeError("Missing LoD: " + str(lod_i))
 
     if len(armatures) > 1:
+        beware = True
         raise RuntimeError("More than one armature set of objects! ")
 
     # Create the LOD dictionnary
@@ -269,6 +288,7 @@ def write_mesh(selected_objects):
         for bone_remap_i, bone_remap in enumerate(armature_data["remap"]):
             armature_data["bones"][bone_remap]["remap"] = bone_remap_i
         if len(armature_data["remap"]) == 0:
+            beware = True
             raise RuntimeError("No used bone found in the armature. ")
 
         for bone_name, bone_data in armature_data["bones"].items():
@@ -773,9 +793,10 @@ def write_mesh(selected_objects):
     colors = []
     faces = []
 
+    warning_count = 0
     for LOD_i, LOD_data in LOD_datas.items():
-        for group in LOD_data["groups"].values():
-            for submesh in group["submeshes"].values():
+        for vis_group in LOD_data["groups"].values():
+            for submesh in vis_group["submeshes"].values():
                 for vertice in submesh["data"].vertices:
                     if do_positions:
                         world_co = submesh["matrix"] @ vertice.co
@@ -793,15 +814,21 @@ def write_mesh(selected_objects):
                         all_groups = all_groups[:8]
                         last_group = all_groups[-1][0]
 
-                        total_weight = 0
-                        for group_i, group in enumerate(all_groups):
-                            total_weight += group[1]
-                        total_weight_normalized = 0
-                        for group_i, group in enumerate(all_groups):
-                            group[1] = int(round((float(group[1]) / float(total_weight)) * 255))
-                            total_weight_normalized += group[1]
-                        weight_excess = 255-total_weight_normalized
-                        all_groups[0][1] += weight_excess
+                        total_weight = sum(group[1] for group in all_groups)
+
+                        if total_weight == 0:
+                            if warning_count == 0:
+                                logger.warning(f"Problematic vertex with groups: {all_groups}, following warnings will be suppressed.")
+                            warning_count += 1
+                            for group in all_groups:
+                                group[1] = 255 // len(all_groups)  # Example: distribute the weight equally if total_weight is zero
+                        else:
+                            total_weight_normalized = 0
+                            for group_i, group in enumerate(all_groups):
+                                group[1] = int(round((float(group[1]) / float(total_weight)) * 255))
+                                total_weight_normalized += group[1]
+                            weight_excess = 255 - total_weight_normalized
+                            all_groups[0][1] += weight_excess
 
                         while len(all_groups) < 8:
                             all_groups.append((last_group, 0))
@@ -824,15 +851,21 @@ def write_mesh(selected_objects):
                         all_groups = all_groups[:8]
                         last_group = all_groups[-1][0]
                         
-                        total_weight = 0
-                        for group_i, group in enumerate(all_groups):
-                            total_weight += group[1]
-                        total_weight_normalized = 0
-                        for group_i, group in enumerate(all_groups):
-                            group[1] = int(round((float(group[1]) / float(total_weight)) * 255))
-                            total_weight_normalized += group[1]
-                        weight_excess = 255-total_weight_normalized
-                        all_groups[0][1] += weight_excess
+                        total_weight = sum(group[1] for group in all_groups)
+
+                        if total_weight == 0:
+                            if warning_count == 0:
+                                logger.warning(f"Problematic shapekey vertex with groups: {all_groups}, following warnings will be suppressed.")
+                            warning_count += 1
+                            for group in all_groups:
+                                group[1] = 255 // len(all_groups)
+                        else:
+                            total_weight_normalized = 0
+                            for group_i, group in enumerate(all_groups):
+                                group[1] = int(round((float(group[1]) / float(total_weight)) * 255))
+                                total_weight_normalized += group[1]
+                            weight_excess = 255 - total_weight_normalized
+                            all_groups[0][1] += weight_excess
 
                         while len(all_groups) < 8:
                             all_groups.append((last_group, 0))
@@ -841,41 +874,31 @@ def write_mesh(selected_objects):
                             shapekey_weights.append(armature_data["bones"][group[0]]["remap"])
                         for group in all_groups:
                             shapekey_weights.append(group[1])
-                #submesh["data"].calc_normals_split()
+
                 submesh["data"].calc_tangents()
                 rot_mat = submesh["matrix"].to_quaternion().to_matrix()
                 encountered_none = False
                 if do_normals:
-                    normal_datas = [None]*len(submesh["data"].vertices)
-                    tangent_datas = [None]*len(submesh["data"].vertices)
-                    bitangent_signs = [None]*len(submesh["data"].vertices)
+                    normal_datas = [[1,0,0]]*len(submesh["data"].vertices)
+                    tangent_datas = [[1,0,0]]*len(submesh["data"].vertices)
+                    bitangent_signs = [1]*len(submesh["data"].vertices)
                     for loop in submesh["data"].loops:
                         normal_datas[loop.vertex_index] = rot_mat @ Vector([x if not math.isnan(x) else 0 for x in loop.normal])
                         tangent_datas[loop.vertex_index] = rot_mat @ Vector([x if not math.isnan(x) else 0 for x in loop.tangent])
                         bitangent_signs[loop.vertex_index] = loop.bitangent_sign
                     for normal_data, tangent_data, bitangent_sign in zip(normal_datas, tangent_datas, bitangent_signs):
-                        if normal_data is not None:
-                            normals.append(math.floor((normal_data[0]*1.0001)*127))
-                            normals.append(math.floor((normal_data[2]*1.0001)*127))
-                            normals.append(math.floor((-normal_data[1]*1.0001)*127))
-                            normals.append(0)
-                            normals.append(math.floor((tangent_data[0]*1.0001)*127))
-                            normals.append(math.floor((tangent_data[2]*1.0001)*127))
-                            normals.append(math.floor((-tangent_data[1]*1.0001)*127))
-                            normals.append(math.floor((bitangent_sign*1.0001)*127))
-                        else:
-                            normals.append(127)
-                            normals.append(0)
-                            normals.append(0)
-                            normals.append(0)
-                            normals.append(127)
-                            normals.append(0)
-                            normals.append(0)
-                            normals.append(127)
+                        normals.append(math.floor((normal_data[0]*1.0001)*127))
+                        normals.append(math.floor((normal_data[2]*1.0001)*127))
+                        normals.append(math.floor((-normal_data[1]*1.0001)*127))
+                        normals.append(0)
+                        normals.append(math.floor((tangent_data[0]*1.0001)*127))
+                        normals.append(math.floor((tangent_data[2]*1.0001)*127))
+                        normals.append(math.floor((-tangent_data[1]*1.0001)*127))
+                        normals.append(math.floor((bitangent_sign*1.0001)*127))
 
-                uv1_datas = [None]*len(submesh["data"].vertices)
-                uv2_datas = [None]*len(submesh["data"].vertices)
-                color_datas = [None]*len(submesh["data"].vertices)
+                uv1_datas = [[0,0]]*len(submesh["data"].vertices)
+                uv2_datas = [[0,0]]*len(submesh["data"].vertices)
+                color_datas = [[1,1,1,1]]*len(submesh["data"].vertices)
                 face_counter = 0
                 for face in submesh["data"].polygons:
                     for vert_idx, loop_idx in zip(face.vertices, face.loop_indices):
@@ -900,32 +923,21 @@ def write_mesh(selected_objects):
                     faces.append(0)
                 if do_uv1:
                     for uv1_data in uv1_datas:
-                        if uv1_data is not None:
-                            uv1s.append(uv1_data[0])
-                            uv1s.append(1.0-uv1_data[1])
-                        else:
-                            uv1s.append(0.0)
-                            uv1s.append(1.0)
+                        uv1s.append(uv1_data[0])
+                        uv1s.append(1.0-uv1_data[1])
                 if do_uv2:
                     for uv2_data in uv2_datas:
-                        if uv2_data is not None:
-                            uv2s.append(uv2_data[0])
-                            uv2s.append(1.0-uv2_data[1])
-                        else:
-                            uv2s.append(0.0)
-                            uv2s.append(1.0)
+                        uv2s.append(uv2_data[0])
+                        uv2s.append(1.0-uv2_data[1])
                 if do_colors:
                     for color_data in color_datas:
-                        if color_data is not None:
-                            colors.append(int(round(color_data[0]*255.0)))
-                            colors.append(int(round(color_data[1]*255.0)))
-                            colors.append(int(round(color_data[2]*255.0)))
-                            colors.append(255)
-                        else:
-                            colors.append(255)
-                            colors.append(255)
-                            colors.append(255)
-                            colors.append(255)
+                        colors.append(int(round(color_data[0]*255.0)))
+                        colors.append(int(round(color_data[1]*255.0)))
+                        colors.append(int(round(color_data[2]*255.0)))
+                        colors.append(255)
+
+    if warning_count > 1:
+        logger.warning(f"{warning_count} warnings were generated during export.")
 
     vertex_buffer_start = writer.tell()
     if do_positions:
@@ -963,4 +975,4 @@ def write_mesh(selected_objects):
     writer.writeUIntAt(filesize_off, len(writer.data))
 
     # Phew
-    return writer.data
+    return writer.data, beware

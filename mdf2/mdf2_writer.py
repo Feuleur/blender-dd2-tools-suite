@@ -218,7 +218,7 @@ class Writer():
             self.writeUByte(0)
 
 
-def export_materials(selected_objects):
+def export_materials(selected_objects, skip_uv_islands=False):
     beware = False
 
     try:
@@ -226,31 +226,54 @@ def export_materials(selected_objects):
             material_template_dict = json.load(json_in)
     except Exception as e:
         raise RuntimeError("Error while trying to load the material template file: exception = " + str(e))
-    # Sanity checks
-    # Bunch of janky filters to avoid crashing during the real export
+
+    mesh_object_count = 0
+    # Going over all objects in the collection, keeping the valid meshes and the armatures
+    # This is mostly to force the user to check if their shit is correctly set, I could fix a lot of stuff myself but
+    # that would imply modifying the user's scene, and I don't want to have that responsability
     obj_ids = []
     available_materials = []
-    # Going over all objects in the collection, keeping the valid meshes and the armatures
-    # This is mostly to force the user to check if their shit is correctly set, I could fix a lot of stuff myself but 
-    # that would imply modifying the user's scene, and I don't want to have that responsability
+
     for obj in selected_objects:
         try:
             if obj.type == "MESH":
+                mesh_object_count += 1
                 splitted_name = obj.name.split("_")
                 if len(splitted_name) >= 3:
-                    lod = int(splitted_name[0][len("LOD"):])
-                    group = int(splitted_name[1][len("G"):])
-                    submesh = int(splitted_name[2][len("S"):])
+                    try:
+                        lod = int(splitted_name[0][len("LOD"):])
+                        group = int(splitted_name[1][len("G"):])
+                        submesh = int(splitted_name[2][len("S"):])
+                        lods.append(lod)
+                    except:
+                        beware = True
+                        raise RuntimeError("Could not deduce LOD, GROUP and SUBMESH data from object name: make sure the object name is in the format \"LOD<number>_G<number>_S<number>_...\"")
                     # Check triangulation
                     for polygon in obj.data.polygons:
                         if len(polygon.loop_indices) != 3:
+                            beware = True
                             raise RuntimeError("Mesh is not triangulated! ")
                     # Check UV1
                     if len(obj.data.uv_layers) == 0:
+                        beware = True
                         raise RuntimeError("Mesh does not have UVs! ")
-                    if len(obj.material_slots) == 1 and obj.material_slots != None:
+                    if not skip_uv_islands:
+                        # Check for uv island separation
+                        # What this checks is the proper attribution of data to vertices instead of face corners, but it's HARD
+                        # It does that by checking if any vertice has more than 2 uv coordinates attributed to it. Technically it's missing cases like color attribution for example, but fuck it
+                        for uv_layer in obj.data.uv_layers:
+                            vertice_uv_coords = {}
+                            for loop, uv in zip(obj.data.loops, uv_layer.uv):
+                                if loop.vertex_index not in vertice_uv_coords.keys():
+                                    vertice_uv_coords[loop.vertex_index] = uv.vector
+                                else:
+                                    if (vertice_uv_coords[loop.vertex_index] - uv.vector).length > 0.01:
+                                        beware = True
+                                        raise RuntimeError("Mesh's UV islands aren't physically separated. .mesh files only support data attributed to vertices instead of face corners like in blender, so you'll have to split the vertices of each UV island. Do that by going in uv editing mode, selecting everything, F3->Seams from islands, selecting one of the seam in edit mode, Shift->G then \"seam\", and tapping \"V\" once.")
+                    if len(obj.material_slots) == 1 and obj.material_slots != None and obj.material_slots[0].name != "":
                         material = obj.material_slots[0].name
                     else:
+                        beware = True
                         raise RuntimeError("Mesh has no material! ")
                     # Making sure there are no duplicates
                     obj_id = str(lod).zfill(3) + str(group).zfill(3) + str(submesh).zfill(3)
@@ -259,18 +282,28 @@ def export_materials(selected_objects):
                         if material not in available_materials:
                             available_materials.append(material)
                     else:
+                        beware = True
                         raise RuntimeError("Object of lod " + str(lod) + ", group " + str(group) + " and submesh " + str(submesh) + " found more than once! ")
+
                 else:
+                    beware = True
                     raise RuntimeError("Could not find lod/group/submesh info in its name! ")
             else:
+                beware = True
                 raise RuntimeError("Not a mesh! ")
         except Exception as e:
-            logger.warning("Skipped object " + obj.name + ", reason = " + str(e))
             beware = True
+            logger.warning("Skipped object " + obj.name + ", reason = " + str(e))
             continue
+
+    if len(objects) == 0:
+        beware = True
+        raise RuntimeError("No valid meshes found: started with " + str(mesh_object_count) + " meshes but got 0 after filtering for issues. Check the system console for the reasons each were skipped. ")
+
     available_materials = available_materials[::-1]
     if len(available_materials) == 0:
         raise RuntimeError("No materials could be extracted from the selection! ")
+
     logger.info("Found the following materials: " + str(available_materials))
     material_datas = []
     for material_name in available_materials:

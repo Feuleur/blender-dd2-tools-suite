@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DD2 tool suite",
     "blender": (3, 6, 0),
-    "version": (1, 0, 5),
+    "version": (1, 0, 6),
     "category": "Import-Export",
 }
 
@@ -14,6 +14,7 @@ import platform
 import numpy as np
 import logging
 logger = logging.getLogger("dd2_import")
+logger.propagate = False
 import sys
 
 from .mesh.ui import DD2_IMPORT_PT_MeshSettingPanel_1
