@@ -232,6 +232,7 @@ def export_materials(selected_objects, skip_uv_islands=False):
     # This is mostly to force the user to check if their shit is correctly set, I could fix a lot of stuff myself but
     # that would imply modifying the user's scene, and I don't want to have that responsability
     obj_ids = []
+    lods = []
     available_materials = []
 
     for obj in selected_objects:
@@ -296,7 +297,7 @@ def export_materials(selected_objects, skip_uv_islands=False):
             logger.warning("Skipped object " + obj.name + ", reason = " + str(e))
             continue
 
-    if len(objects) == 0:
+    if len(obj_ids) == 0:
         beware = True
         raise RuntimeError("No valid meshes found: started with " + str(mesh_object_count) + " meshes but got 0 after filtering for issues. Check the system console for the reasons each were skipped. ")
 
