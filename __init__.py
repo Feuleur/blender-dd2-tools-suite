@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DD2 tool suite",
     "blender": (3, 6, 0),
-    "version": (1, 0, 7),
+    "version": (1, 0, 8),
     "category": "Import-Export",
 }
 

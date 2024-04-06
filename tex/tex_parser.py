@@ -4,43 +4,11 @@ import numpy as np
 import ctypes
 #import addon_utils
 import os
-import sys 
+import sys
 import logging
 logger = logging.getLogger("dd2_import")
 
-shared_library_path = None
-shared_library_filename = "read_dxgi_format.so"
-if sys.platform == "linux" or sys.platform == "linux2":
-    shared_library_filename = "read_dxgi_format.so"
-elif sys.platform == "win32":
-    shared_library_filename = "read_dxgi_format.dll"
 
-shared_library_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), shared_library_filename)
-
-lib = ctypes.cdll.LoadLibrary(shared_library_path)
-lib.read_bc1.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_bc1.restype = ctypes.c_int
-
-lib.read_bc3.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_bc3.restype = ctypes.c_int
-
-lib.read_bc4.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_bc4.restype = ctypes.c_int
-
-lib.read_bc5.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_bc5.restype = ctypes.c_int
-
-lib.read_bc7.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_bc7.restype = ctypes.c_int
-
-lib.read_r8.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_r8.restype = ctypes.c_int
-
-lib.read_r8g8.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_r8g8.restype = ctypes.c_int
-
-lib.read_r8g8b8a8.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
-lib.read_r8g8b8a8.restype = ctypes.c_int
 
 DXGI_FORMAT = {
     0: "UNKNOWN",
@@ -162,14 +130,14 @@ DXGI_FORMAT = {
     130: "P208",
     131: "V208",
     132: "V408",
-    0xffffffff:  "FORCE_UINT" 
+    0xffffffff:  "FORCE_UINT"
 }
 
 class Reader():
     def __init__(self, data):
         self.offset = 0
         self.data = data
-    
+
     def read(self, kind, size):
         result = struct.unpack(kind, self.data[self.offset:self.offset+size])[0]
         self.offset += size
@@ -183,13 +151,13 @@ class Reader():
 
     def readUInt(self):
         return self.read("I", 4)
-    
+
     def readInt(self):
         return self.read("i", 4)
-        
+
     def readUInt64(self):
         return self.read("Q", 8)
-    
+
     def readHalf(self):
         return self.read("e", 2)
 
@@ -198,16 +166,16 @@ class Reader():
 
     def readShort(self):
         return self.read("h", 2)
-    
+
     def readUShort(self):
         return self.read("H", 2)
 
     def readByte(self):
         return self.read("b", 1)
-    
+
     def readBytes(self, size):
         return self.data[self.offset:self.offset + size]
-    
+
     def readUByte(self):
         return self.read("B", 1)
 
@@ -223,15 +191,49 @@ class Reader():
 
     def allign(self, size):
         self.offset = (int((self.offset)/size)*size)+size
-        
+
     def tell(self):
         return self.offset
-    
+
     def getSize(self):
         return len(self.data)
 
 class TexParser():
     def __init__(self, path=None, data=None):
+        shared_library_path = None
+        shared_library_filename = "read_dxgi_format.so"
+        if sys.platform == "linux" or sys.platform == "linux2":
+            shared_library_filename = "read_dxgi_format.so"
+        elif sys.platform == "win32":
+            shared_library_filename = "read_dxgi_format.dll"
+
+        shared_library_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), shared_library_filename)
+
+        self.lib = ctypes.cdll.LoadLibrary(shared_library_path)
+        self.lib.read_bc1.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_bc1.restype = ctypes.c_int
+
+        self.lib.read_bc3.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_bc3.restype = ctypes.c_int
+
+        self.lib.read_bc4.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_bc4.restype = ctypes.c_int
+
+        self.lib.read_bc5.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_bc5.restype = ctypes.c_int
+
+        self.lib.read_bc7.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_bc7.restype = ctypes.c_int
+
+        self.lib.read_r8.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_r8.restype = ctypes.c_int
+
+        self.lib.read_r8g8.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_r8g8.restype = ctypes.c_int
+
+        self.lib.read_r8g8b8a8.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_uint, ctypes.c_uint]
+        self.lib.read_r8g8b8a8.restype = ctypes.c_int
+
         self.path = path
         if data is None:
             with open(path, "rb") as file_in:
@@ -253,7 +255,7 @@ class TexParser():
         unk02 = self.bs.readUInt()
         unk03 = self.bs.readUInt()
         unk04 = self.bs.readUInt()
-        
+
         self.bs.seek(8,1)
         self.mipData = []
         for i in range(self.numImages):
@@ -264,17 +266,17 @@ class TexParser():
 
     def read_BC1(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_bc1(
-            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p), 
-            img_array.ctypes.data_as(ctypes.c_void_p), 
-            mipWidth, 
+        ret = self.lib.read_bc1(
+            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
+            img_array.ctypes.data_as(ctypes.c_void_p),
+            mipWidth,
             mipHeight
         )
         return img_array
-    
+
     def read_BC3(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_bc3(
+        ret = self.lib.read_bc3(
             np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
             img_array.ctypes.data_as(ctypes.c_void_p),
             mipWidth,
@@ -284,64 +286,64 @@ class TexParser():
 
     def read_BC4(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_bc4(
-            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p), 
-            img_array.ctypes.data_as(ctypes.c_void_p), 
-            mipWidth, 
+        ret = self.lib.read_bc4(
+            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
+            img_array.ctypes.data_as(ctypes.c_void_p),
+            mipWidth,
             mipHeight
         )
         return img_array
-    
+
     def read_BC5(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_bc5(
-            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p), 
-            img_array.ctypes.data_as(ctypes.c_void_p), 
-            mipWidth, 
+        ret = self.lib.read_bc5(
+            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
+            img_array.ctypes.data_as(ctypes.c_void_p),
+            mipWidth,
             mipHeight
         )
         return img_array
-    
+
     def read_BC7(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_bc7(
-            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p), 
-            img_array.ctypes.data_as(ctypes.c_void_p), 
-            mipWidth, 
+        ret = self.lib.read_bc7(
+            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
+            img_array.ctypes.data_as(ctypes.c_void_p),
+            mipWidth,
             mipHeight
         )
         return img_array
 
     def read_R8(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_r8(
-            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p), 
-            img_array.ctypes.data_as(ctypes.c_void_p), 
-            mipWidth, 
+        ret = self.lib.read_r8(
+            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
+            img_array.ctypes.data_as(ctypes.c_void_p),
+            mipWidth,
             mipHeight
         )
         return img_array
-    
+
     def read_R8G8(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_r8g8(
-            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p), 
-            img_array.ctypes.data_as(ctypes.c_void_p), 
-            mipWidth, 
+        ret = self.lib.read_r8g8(
+            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
+            img_array.ctypes.data_as(ctypes.c_void_p),
+            mipWidth,
             mipHeight
         )
         return img_array
 
     def read_R8G8B8A8(self, texData, mipWidth, mipHeight, format):
         img_array = np.empty([mipHeight, mipWidth, 4], dtype=np.uint8)
-        ret = lib.read_r8g8b8a8(
-            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p), 
-            img_array.ctypes.data_as(ctypes.c_void_p), 
-            mipWidth, 
+        ret = self.lib.read_r8g8b8a8(
+            np.frombuffer(texData, np.uint8).ctypes.data_as(ctypes.c_void_p),
+            img_array.ctypes.data_as(ctypes.c_void_p),
+            mipWidth,
             mipHeight
         )
         return img_array
-    
+
     def read(self, mipLevel=0):
         img_array = np.ones([4, 4, 4], dtype=np.uint8)*255
         could_read = False
