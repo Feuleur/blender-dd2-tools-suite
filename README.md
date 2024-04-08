@@ -34,6 +34,32 @@ The importers/exporters can then be found in blender's import/export menus:
 
 ![demo_1.png](images/demo_1.png)
 
+## Exporting guide
+
+When exporting both meshes or materials, the script makes a list of all selected objects in the scene. Then, it applies the following filters to that list:
+- Are the objects meshes/armatures?
+- If there is an armature, is there only 1?
+- Do the mesh objects name match the pattern ```LOD<number>_G<number>_S<number>_<anything>``` ?
+- Are the meshes triangulated?
+- Is there at least 1 UV layer per object?
+- Do the objects have at least one named material? (doesn't matter if the material is valid or not, as long as it's named)
+- Are the UV islands physically separated? (that check can be skipped with a checkbox at export)
+
+If there are still objects left after those filters, the mesh and material exporters do their own things with them:
+
+- The mesh exporter will proceed to analyse the geometry and write the mesh file out of it. The object names will determine the LOD, visibility group and submesh of the objects. Missing informations are filled as best as possible, and some features are selectivelly enabled if some info are present (for example, a mesh file with an armature is way different than without one, and some structures are only exported by some triggers like the presence of "SHAPEKEY_<bone>" vertex groups). As a general rule, try and copy the structure of the object you want to replace.
+
+- The material exporter will go over the material of the selected objects and check their Custom Properties (the menu at the very bottom of the material tab ; when importing a mdf2 file, you'll see that a bunch of stuff is written in there) if they have enough information to be exported. Generally you don't want to make a material from scratch, instead import a mdf2 to get some pre-filled materials that you can modify. Changing the textures paths is done in the Custom Properties, while changing the material Properties (NOT the Custom Properties, it's a different thing) is done directly in the Shader Node window in blender. Just change the values of the nodes in the "Properties" frame: any node in it will be checked by the exporter.
+
+Mesh file and Mdf2 files's material names need to match exactly to not glitch in-game (i.e. no missing or unused materials), so I advise exporting both from blender, and make sure no mesh/material was filtered away.
+
+### Tips:
+
+- Open the system console (Window->Toggle System Console) and check whatever is written in it, detailed errors and warnings are written in it.
+- You can skip the UV island check since it gives false positives sometimes. You risk having texture warpings around the UV seams of the mesh though.
+- When in doubt, import back in blender whatever you exported to check if there is any obviously missing/malformed thing, preferably in a new clean blender file to avoid any overlapping data issue.
+- The imported objects have a different naming pattern than previous importers because blender has a 63 character limit for names. Having half of that solely used by the metadata is a massive pain to work with, and even more when dealing with maps that can have long object names.
+
 ## Batch import
 
 The importing functions are callable through the python api.
