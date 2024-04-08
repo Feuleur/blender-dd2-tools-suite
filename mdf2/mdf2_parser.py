@@ -157,13 +157,14 @@ class Mdf2Parser():
                 buffer_info["unk2"] = self.bs.readUInt()
                 buffer_infos.append(buffer_info)
 
-            buffers = {}
+            buffers = []
             for buffer_info in buffer_infos:
                 self.bs.seek(buffer_info["buffer_type_off"])
                 buffer_info["buffer_type"] = self.bs.readString(byte_n = 2)
                 self.bs.seek(buffer_info["file_path_off"])
                 buffer_info["file_path"] = self.bs.readString(byte_n = 2)
-                buffers[buffer_info["buffer_type"]] = buffer_info["file_path"]
+                buffers.append(buffer_info)
+                #buffers[buffer_info["buffer_type"]] = buffer_info["file_path"]
             material_info["buffers"] = buffer_infos
 
             self.bs.seek(material_info["prop_headers_off"])
@@ -205,6 +206,7 @@ class Mdf2Parser():
                 "flag2":material_info["flag2"],
                 "phong":material_info["phong"],
                 "flag3":material_info["flag3"],
+                "buffers":buffers,
                 "unknown_hash1":material_info["unknown_hash1"],
                 "unknown_hash2":material_info["unknown_hash2"],
                 "material_info":material_info
@@ -294,9 +296,11 @@ class Mdf2Parser():
         return self.materials
 
 if __name__ == "__main__":
-    pass
+    #pass
     #parser = MeshParser("./item_224/mod/item_224.mesh.2109148288")
-    parser = Mdf2Parser("wp00_000.mdf2.40")
+    parser = Mdf2Parser("tops_012_am_m_new.mdf2.40")
     #parser = Mdf2Parser(mdf2_file)
     data = parser.read()
-    print(data)
+    import json
+
+    print(json.dumps(data, indent=4))

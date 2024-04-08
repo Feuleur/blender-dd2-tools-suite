@@ -201,11 +201,12 @@ class DD2_ExportMesh(bpy.types.Operator, ExportHelper):
     filename_ext = ".231011879"
     filter_glob: bpy.props.StringProperty(default="*.mesh*", options={'HIDDEN'})
     skip_uv_islands: bpy.props.BoolProperty(name="Skip UV island filter", description="Skip the UV island filter, only use if you're sure it's giving false positives: may results in warped textures at the mesh seams", default=False)
+    force_secondary_weight: bpy.props.BoolProperty(name="Force secondary weights", description="Forces the export of a secondary weight array, no matter if \"SHAPEKEY_<bone>\" vertex groups are present in the meshes. Use this option if part of an armor is flying of in the distance", default=False)
 
     def execute(self, context):
         selected_objects = context.selected_objects
         try:
-            data, beware = write_mesh(selected_objects, self.skip_uv_islands)
+            data, beware = write_mesh(selected_objects, skip_uv_islands=self.skip_uv_islands, force_secondary_weight=self.force_secondary_weight)
         except Exception as e:
             self.report({"ERROR"}, "Could not export mesh, reason = " + str(e))
             import traceback

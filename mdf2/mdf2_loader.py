@@ -186,6 +186,14 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, s
         mat["unknown_hash1"] = mat_values["unknown_hash1"]
         mat["unknown_hash2"] = mat_values["unknown_hash2"]
 
+        # Buffers
+        mat["buffer_count"] = len(mat_values["buffers"])
+        for buffer_i, buffer_data in enumerate(mat_values["buffers"]):
+            mat["buffer_type_"+str(buffer_i)] = str(buffer_data["buffer_type"])
+            mat["buffer_file_path_"+str(buffer_i)] = str(buffer_data["file_path"])
+            mat["buffer_unk1_"+str(buffer_i)] = int(buffer_data["unk1"])
+            mat["buffer_unk2_"+str(buffer_i)] = int(buffer_data["unk2"])
+
         node_UVMap1 = nodes.new(type='ShaderNodeUVMap')
         node_UVMap1.location = Vector((general_frame_x, general_frame_y-0.0))
         node_UVMap1.uv_map = "UV1"

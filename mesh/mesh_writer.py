@@ -96,7 +96,7 @@ class Writer():
         for pad_i in range((size - (len(self.data)%size))%size):
             self.writeUByte(0)
 
-def write_mesh(selected_objects, skip_uv_islands=False):
+def write_mesh(selected_objects, skip_uv_islands=False, force_secondary_weight=False):
     beware = False
 
     # Sanity checks
@@ -352,6 +352,8 @@ def write_mesh(selected_objects, skip_uv_islands=False):
             do_shapekey = True
         else:
             do_shapekey = False
+        if force_secondary_weight:
+            do_shapekey = True
     else:
         do_weights = False
         do_shapekey = False

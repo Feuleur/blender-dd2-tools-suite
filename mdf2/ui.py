@@ -134,11 +134,12 @@ class DD2_ExportMdf2(bpy.types.Operator, ExportHelper):
     filename_ext = ".40"
     filter_glob: bpy.props.StringProperty(default="*.mdf2*", options={'HIDDEN'})
     skip_uv_islands: bpy.props.BoolProperty(name="Skip UV island filter", description="Skip the UV island filter, only use if you're sure it's giving false positives: may results in warped textures at the mesh seams", default=False)
+    force_buffer_export: bpy.props.BoolProperty(name="Force buffer export", description="Include Rainbuffer and Fadebuffer in the outputted file. Use this option if the resulting material is anormaly shiny.", default=False)
 
     def execute(self, context):
         selected_objects = context.selected_objects
         try:
-            material_datas, beware_export = export_materials(selected_objects, self.skip_uv_islands)
+            material_datas, beware_export = export_materials(selected_objects, skip_uv_islands=self.skip_uv_islands, force_buffer_export=self.force_buffer_export)
             data, beware_write = write_mdf2(material_datas)
             with open(self.filepath, "wb") as file_out:
                 file_out.write(data)

@@ -218,7 +218,7 @@ class Writer():
             self.writeUByte(0)
 
 
-def export_materials(selected_objects, skip_uv_islands=False):
+def export_materials(selected_objects, skip_uv_islands=False, force_buffer_export=False):
     beware = False
 
     try:
@@ -390,6 +390,37 @@ def export_materials(selected_objects, skip_uv_islands=False):
         if "unknown_hash2" in material.keys():
             unknown_hash2 = material["unknown_hash2"]
 
+        buffers = []
+        if not force_buffer_export:
+            try:
+                if "buffer_count" in material.keys():
+                    buffer_count = int(material["buffer_count"])
+                    for buffer_i in range(buffer_count):
+                        buffer_data = {}
+                        buffer_data["buffer_type"] = material["buffer_type_"+str(buffer_i)]
+                        buffer_data["buffer_file_path"] = material["buffer_file_path_"+str(buffer_i)]
+                        buffer_data["unk1"] = material["buffer_unk1_"+str(buffer_i)]
+                        buffer_data["unk2"] = material["buffer_unk2_"+str(buffer_i)]
+                        buffers.append(buffer_data)
+            except Exception as e:
+                logger.warning("Skipped buffer: this may happen when a material from an older version is exported. reason = " + str(e))
+                buffers = []
+        else:
+            buffers = [
+                {
+                    "buffer_type":"RainAddressBuffer",
+                    "buffer_file_path":"MaterialShader/ByteAddressBuffer/CharacterRainByteAddressBuffer.gpbf",
+                    "unk1":0,
+                    "unk2":1
+                },
+                {
+                    "buffer_type":"CharacterFadeBuffer",
+                    "buffer_file_path":"MaterialShader/ByteAddressBuffer/CharacterFadeByteAddressBuffer.gpbf",
+                    "unk1":0,
+                    "unk2":1
+                }
+            ]
+
         material_texture_data = {}
         for texture_type in material_template_dict[material_type]["textures"]:
             try:
@@ -452,7 +483,8 @@ def export_materials(selected_objects, skip_uv_islands=False):
             "phong":phong,
             "flag3":flag3,
             "unknown_hash1":unknown_hash1,
-            "unknown_hash2":unknown_hash2
+            "unknown_hash2":unknown_hash2,
+            "buffers":buffers
         })
     return material_datas, beware
 
@@ -481,8 +513,8 @@ def write_mdf2(material_datas):
         writer.writeUInt(prop_block_size) # property block size
         writer.writeUInt(len(material_data["material_property_data"])) # property count
         writer.writeUInt(len(material_data["material_texture_data"])) # property count
-        writer.writeUInt(0) # buffer count, but not dealing with them atm
-        writer.writeUInt(0) # buffer count, but not dealing with them atm
+        writer.writeUInt(len(material_data["buffers"])) #
+        writer.writeUInt(len(material_data["buffers"])) # buffer count, but not dealing with them atm
         writer.writeUInt(material_data["shader_type"]) # Shader type
         writer.writeUByte(material_data["flag1"]) # flags 
         writer.writeUByte(material_data["flag2"]) # flags
@@ -537,6 +569,22 @@ def write_mdf2(material_datas):
 
     for material_i, material_data in enumerate(material_datas):
         writer.writeUInt64At(material_offsets_list[material_i]["buffer_header_offset"], writer.tell())
+        material_offsets_list[material_i]["buffers"] = []
+        for buffer_data in material_data["buffers"]:
+            buffer_strings_offsets = {}
+            buffer_strings_offsets["buffer_type_offset"] = writer.tell()
+            writer.writeUInt64(0)
+            buffer_strings_offsets["buffer_type"] = buffer_data["buffer_type"]
+
+            writer.writeUInt(murmurhash_32(buffer_data["buffer_type"].encode("utf-16LE"), 0xFFFFFFFF)) # name hash
+            writer.writeUInt(murmurhash_32(buffer_data["buffer_type"].encode("utf-8"), 0xFFFFFFFF)) # name hash
+            buffer_strings_offsets["file_path_offset"] = writer.tell()
+            writer.writeUInt64(0)
+            buffer_strings_offsets["file_path"] = buffer_data["buffer_file_path"]
+
+            writer.writeUInt(buffer_data["unk1"])
+            writer.writeUInt(buffer_data["unk2"])
+            material_offsets_list[material_i]["buffers"].append(buffer_strings_offsets)
 
     for material_i, material_data in enumerate(material_datas):
         writer.writeUInt64At(material_offsets_list[material_i]["name_offset"], writer.tell())
@@ -556,6 +604,13 @@ def write_mdf2(material_datas):
         for property_name, property_value in material_data["material_property_data"].items():
             writer.writeUInt64At(properties_offsets_list[material_i][property_name]["property_name_offset"], writer.tell())
             writer.writeStringUTF(property_name)
+
+    for material_i, material_data in enumerate(material_datas):
+        for buffer_data in material_offsets_list[material_i]["buffers"]:
+            writer.writeUInt64At(buffer_data["buffer_type_offset"], writer.tell())
+            writer.writeStringUTF(buffer_data["buffer_type"])
+            writer.writeUInt64At(buffer_data["file_path_offset"], writer.tell())
+            writer.writeStringUTF(buffer_data["file_path"])
 
     property_array_offset = writer.tell()
     for material_i, material_data in enumerate(material_datas):
