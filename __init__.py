@@ -1,7 +1,7 @@
 bl_info = {
     "name": "DD2 tool suite",
     "blender": (3, 6, 0),
-    "version": (1, 0, 9),
+    "version": (1, 0, 10),
     "category": "Import-Export",
 }
 
@@ -34,6 +34,8 @@ from .tex.ui import DD2_ExportTex
 
 from .mot.ui import DD2_IMPORT_PT_MotlistSettingPanel_1
 from .mot.ui import DD2_ImportMotlist
+
+from .gpuc.ui import DD2_ImportGpuc
 
 class ColoredFormatter(logging.Formatter):
     def __init__(self, *args, **kwargs):
@@ -99,6 +101,7 @@ def DD2_menu_func_import(self, context):
     self.layout.operator(DD2_ImportMdf2.bl_idname, text="DD2 material files (.mdf2.40)", icon="MATERIAL_DATA")
     self.layout.operator(DD2_ImportTex.bl_idname, text="DD2 texture files (.tex.760230703)", icon="TEXTURE_DATA")
     self.layout.operator(DD2_ImportMotlist.bl_idname, text="DD2 animation files (.motlist.751)", icon="ANIM_DATA")
+    self.layout.operator(DD2_ImportGpuc.bl_idname, text="DD2 cloth sim files (.gpuc.231011972)", icon="MOD_CLOTH")
 
 def DD2_menu_func_export(self, context):
     self.layout.operator(DD2_ExportMesh.bl_idname, text="DD2 mesh files (.mesh.231011879)", icon="MESH_DATA")
@@ -110,6 +113,7 @@ def register():
     bpy.utils.register_class(DD2_ImportMdf2)
     bpy.utils.register_class(DD2_ImportTex)
     bpy.utils.register_class(DD2_ImportMotlist)
+    bpy.utils.register_class(DD2_ImportGpuc)
     bpy.utils.register_class(DD2_CustomAddonPreferences)
     bpy.utils.register_class(DD2_IMPORT_PT_MeshSettingPanel_1)
     bpy.utils.register_class(DD2_IMPORT_PT_MeshSettingPanel_2)
@@ -130,6 +134,7 @@ def unregister():
     bpy.utils.unregister_class(DD2_ImportMdf2)
     bpy.utils.unregister_class(DD2_ImportTex)
     bpy.utils.unregister_class(DD2_ImportMotlist)
+    bpy.utils.unregister_class(DD2_ImportGpuc)
     bpy.utils.unregister_class(DD2_CustomAddonPreferences)
     bpy.utils.unregister_class(DD2_IMPORT_PT_MeshSettingPanel_1)
     bpy.utils.unregister_class(DD2_IMPORT_PT_MeshSettingPanel_2)

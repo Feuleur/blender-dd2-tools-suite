@@ -129,7 +129,7 @@ class DD2_ExportTex(bpy.types.Operator, ExportHelper):
             texture_data = {
                 "data":np.flip(np.array(selected_image.pixels).reshape(selected_image.size[0], selected_image.size[1], -1), 0).flatten(),
                 "width":selected_image.size[0],
-                "height":selected_image.size[0],
+                "height":selected_image.size[1],
                 "space":selected_image.colorspace_settings.name
             }
             data = write_tex(texture_data)
