@@ -546,7 +546,8 @@ def write_mesh(selected_objects, skip_uv_islands=False, force_secondary_weight=F
             writer.writeUInt64At(groups_offset[group_i], writer.tell())
             writer.writeUByte(group_id) # ID
             writer.writeUByte(len(group["submeshes"])) # Submeshes count
-            writer.padUntilAlligned(8)
+            writer.writeUShort(0)
+            writer.writeUInt(0)
             vertex_count = 0
             loops_count = 0
             for submesh in group["submeshes"].values():
@@ -561,6 +562,7 @@ def write_mesh(selected_objects, skip_uv_islands=False, force_secondary_weight=F
                 writer.writeUInt(global_loops_count)
                 writer.writeUInt(global_vertex_count)
                 writer.writeUInt64(0)
+                writer.writeUInt(0)
                 global_vertex_count += len(submesh["data"].vertices)
 
                 global_loops_count += len(submesh["data"].loops)

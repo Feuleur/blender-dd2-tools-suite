@@ -215,7 +215,8 @@ class MeshParser():
                 group_info = {}
                 group_info["id"] = self.bs.readUByte()
                 group_info["submesh_count"] = self.bs.readUByte()
-                self.bs.allign(8)
+                self.bs.readUShort()
+                self.bs.readUInt()
 
                 group_info["vertex_count"] = self.bs.readUInt()
                 group_info["vertex_start"] = total_vertices
@@ -238,6 +239,7 @@ class MeshParser():
                     submesh_info["loop_start"] = self.bs.readUInt()
                     submesh_info["vertex_start"] = self.bs.readUInt()
                     _ = self.bs.readUInt64()
+                    _ = self.bs.readUInt()
                     if not no_keep:
                         group_info["submeshes_info"].append(submesh_info)
                 if no_keep:
@@ -251,8 +253,8 @@ class MeshParser():
                 "groups":group_infos,
             })
         material_count = len(set(materials_idxs))
-        #import json
-        #print(json.dumps(LOD_infos, indent=4))
+        # import json
+        # print(json.dumps(LOD_infos, indent=4))
 
         # Names
         names = []
@@ -499,7 +501,6 @@ class MeshParser():
         for LOD_i, LOD_info in enumerate(LOD_infos):
             for group_i, group_info in enumerate(LOD_info["groups"]):
                 for submesh_i, submesh_info in enumerate(group_info["submeshes_info"]):
-
                     face_start = submesh_info["loop_start"]//3
                     face_count = submesh_info["loop_count"]//3
                     vertex_start = submesh_info["vertex_start"]
@@ -580,7 +581,6 @@ if __name__ == "__main__":
     #parser = MeshParser("./item_224/mod/item_224.mesh.2109148288")
     #parser = MeshParser("./000/mod/hm06_000.mesh.2109148288")
     #mesh_file = "ch59_000.mesh.231011879"
-    mesh_file = "sm82_004_00.mesh.231011879"
 
     #for mesh_file in mesh_files:
     parser = MeshParser(mesh_file)

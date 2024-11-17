@@ -456,7 +456,11 @@ def load_mdf2(game_path, filepath, material_template={}, use_loaded_mat=False, s
                 "NormalRoughnessAlphaMap" in mat_values["textures"].keys() or
                 group_name in ["Character_Eyelash", "Character_Eyebrow", "Character_Hair", "Character_HairCap"]
             )
-            if "Character_EnemyLarge_Dragon" in group_name:
+            if group_name in [
+                "Character_EnemyLarge_Dragon",
+                "Character_Enemy_PoisonLizard",
+                "Character_Enemy_RockLizard",
+                "Character_Enemy_RockLizard_EmissiveAnim"]:
                 has_alpha = False
 
             for mmtr_output_key in mmtr_post.outputs.keys():
