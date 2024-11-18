@@ -195,10 +195,10 @@ class DD2_ImportMesh(bpy.types.Operator, ImportHelper):
 
 
 class DD2_ExportMesh(bpy.types.Operator, ExportHelper):
-    """Export to DD2 mesh file format (.mesh.231011879)"""
+    """Export to DD2 mesh file format (.mesh.240423143)"""
     bl_idname = "dd2_export.dd2_mesh"
     bl_label = 'Export DD2 Mesh'
-    filename_ext = ".231011879"
+    filename_ext = ".240423143"
     filter_glob: bpy.props.StringProperty(default="*.mesh*", options={'HIDDEN'})
     skip_uv_islands: bpy.props.BoolProperty(name="Skip UV island filter", description="Skip the UV island filter, only use if you're sure it's giving false positives: may results in warped textures at the mesh seams", default=False)
     force_secondary_weight: bpy.props.BoolProperty(name="Force secondary weights", description="Forces the export of a secondary weight array, no matter if \"SHAPEKEY_<bone>\" vertex groups are present in the meshes. Use this option if part of an armor is flying of in the distance", default=False)

@@ -97,14 +97,14 @@ class DD2_CustomAddonPreferences(bpy.types.AddonPreferences):
 
 
 def DD2_menu_func_import(self, context):
-    self.layout.operator(DD2_ImportMesh.bl_idname, text="DD2 model files (.mesh.231011879)", icon="MESH_DATA")
+    self.layout.operator(DD2_ImportMesh.bl_idname, text="DD2 model files (.mesh.240423143)", icon="MESH_DATA")
     self.layout.operator(DD2_ImportMdf2.bl_idname, text="DD2 material files (.mdf2.40)", icon="MATERIAL_DATA")
     self.layout.operator(DD2_ImportTex.bl_idname, text="DD2 texture files (.tex.760230703)", icon="TEXTURE_DATA")
     self.layout.operator(DD2_ImportMotlist.bl_idname, text="DD2 animation files (.motlist.751)", icon="ANIM_DATA")
     self.layout.operator(DD2_ImportGpuc.bl_idname, text="DD2 cloth sim files (.gpuc.231011972)", icon="MOD_CLOTH")
 
 def DD2_menu_func_export(self, context):
-    self.layout.operator(DD2_ExportMesh.bl_idname, text="DD2 mesh files (.mesh.231011879)", icon="MESH_DATA")
+    self.layout.operator(DD2_ExportMesh.bl_idname, text="DD2 mesh files (.mesh.240423143)", icon="MESH_DATA")
     self.layout.operator(DD2_ExportMdf2.bl_idname, text="DD2 material files (.mdf2.40)", icon="MATERIAL_DATA")
     self.layout.operator(DD2_ExportTex.bl_idname, text="DD2 texture files (.tex.760230703)", icon="TEXTURE_DATA")
 
