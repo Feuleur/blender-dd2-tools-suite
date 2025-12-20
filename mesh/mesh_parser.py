@@ -511,7 +511,9 @@ class MeshParser():
                     if pos_values is not None:
                         LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["pos"] = pos_values[vertex_start:vertex_start+vertex_count]
                     if normal_values is not None:
-                        LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["normals"] = normal_values[vertex_start:vertex_start+vertex_count,:3]/127.0
+                        clipped_array = np.clip(normal_values[vertex_start:vertex_start+vertex_count,:3]/127.0, -1.0, 1.0)
+                        normalized_array = clipped_array / np.linalg.norm(clipped_array, axis=1).reshape(-1,1)
+                        LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["normals"] = normalized_array
                     if uv1_values is not None:
                         LOD_infos[LOD_i]["groups"][group_i]["submeshes_info"][submesh_i]["uv1"] = np.stack([uv1_values[vertex_start:vertex_start+vertex_count,0], 1.0-uv1_values[vertex_start:vertex_start+vertex_count,1]]).transpose([1,0])
                     if uv2_values is not None:

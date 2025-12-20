@@ -890,15 +890,27 @@ def write_mesh(selected_objects, skip_uv_islands=False, force_secondary_weight=F
                         normal_datas[loop.vertex_index] = rot_mat @ Vector([x if not math.isnan(x) else 0 for x in loop.normal])
                         tangent_datas[loop.vertex_index] = rot_mat @ Vector([x if not math.isnan(x) else 0 for x in loop.tangent])
                         bitangent_signs[loop.vertex_index] = loop.bitangent_sign
+                    normal_datas = np.array(normal_datas)
+                    normal_datas = np.round(normal_datas * 127.0).astype(np.int8)
+                    normal_datas = np.clip(normal_datas, -127, 127)
+
+                    tangent_datas = np.array(tangent_datas)
+                    tangent_datas = np.round(tangent_datas * 127.0).astype(np.int8)
+                    tangent_datas = np.clip(tangent_datas, -127, 127)
+
+                    bitangent_signs = np.array(bitangent_signs)
+                    bitangent_signs = np.round(bitangent_signs * 127.0).astype(np.int8)
+                    bitangent_signs = np.clip(bitangent_signs, -128, 127)
+
                     for normal_data, tangent_data, bitangent_sign in zip(normal_datas, tangent_datas, bitangent_signs):
-                        normals.append(math.floor((normal_data[0]*1.0001)*127))
-                        normals.append(math.floor((normal_data[2]*1.0001)*127))
-                        normals.append(math.floor((-normal_data[1]*1.0001)*127))
+                        normals.append(normal_data[0])
+                        normals.append(normal_data[2])
+                        normals.append(-normal_data[1])
                         normals.append(0)
-                        normals.append(math.floor((tangent_data[0]*1.0001)*127))
-                        normals.append(math.floor((tangent_data[2]*1.0001)*127))
-                        normals.append(math.floor((-tangent_data[1]*1.0001)*127))
-                        normals.append(math.floor((bitangent_sign*1.0001)*127))
+                        normals.append(tangent_data[0])
+                        normals.append(tangent_data[2])
+                        normals.append(-tangent_data[1])
+                        normals.append(bitangent_sign)
 
                 uv1_datas = [[0,0]]*len(submesh["data"].vertices)
                 uv2_datas = [[0,0]]*len(submesh["data"].vertices)
